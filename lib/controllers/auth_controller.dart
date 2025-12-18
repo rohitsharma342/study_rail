@@ -40,9 +40,8 @@ class AuthController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate API call
+      await Future.delayed(Duration(seconds: 2));
       
-      // Simple validation for demo
       if (email.contains('@railway.gov.in') && password.length >= 6) {
         _currentUser.value = StaticData.currentUser;
         _isLoggedIn.value = true;

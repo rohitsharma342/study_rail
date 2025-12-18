@@ -28,12 +28,12 @@ class LeaderboardController extends GetxController {
   }
 
   void _loadStaticData() {
-    _userResults.assignAll(StaticData.userTestResults);
+    _userResults.assignAll(StaticData.userTestResults.cast<TestResult>());
   }
 
   void _loadAvailableDates() {
     final dates = StaticData.leaderboardData.keys.toList();
-    dates.sort((a, b) => b.compareTo(a)); // Sort in descending order (latest first)
+    dates.sort((a, b) => b.compareTo(a));
     _availableDates.assignAll(dates);
   }
 
@@ -42,11 +42,10 @@ class LeaderboardController extends GetxController {
       _isLoading.value = true;
       _selectedDate.value = date;
       
-      // Simulate API call delay
       await Future.delayed(Duration(milliseconds: 500));
       
       final entries = StaticData.leaderboardData[date] ?? [];
-      _leaderboardEntries.assignAll(entries);
+      _leaderboardEntries.assignAll(entries.cast<LeaderboardEntry>());
     } catch (e) {
       Get.snackbar(
         'Error',
@@ -73,7 +72,7 @@ class LeaderboardController extends GetxController {
 
   LeaderboardEntry? getUserRankForTest(String testId, String date) {
     final entries = StaticData.leaderboardData[date] ?? [];
-    return entries.where((entry) => 
+    return entries.cast<LeaderboardEntry>().where((entry) => 
       entry.testId == testId && 
       entry.userId == StaticData.currentUser.id
     ).firstOrNull;

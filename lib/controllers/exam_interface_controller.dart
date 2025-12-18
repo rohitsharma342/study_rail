@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/exam.dart';
 import '../models/exam_question.dart';
@@ -68,14 +69,12 @@ class ExamInterfaceController extends GetxController {
     _currentExam = exam;
     
     try {
-      // Simulate loading questions from API
       await Future.delayed(Duration(milliseconds: 500));
       
-      // Get questions for the exam (using static data for now)
       final questions = StaticData.questions.take(exam.totalQuestions).toList();
       
       _examQuestions.value = questions.map((question) => ExamQuestion(question: question)).toList();
-      _remainingTimeInSeconds.value = exam.duration * 60; // Convert minutes to seconds
+      _remainingTimeInSeconds.value = exam.duration * 60;
       _currentQuestionIndex.value = 0;
       _isExamStarted.value = false;
       _isExamCompleted.value = false;
@@ -91,7 +90,6 @@ class ExamInterfaceController extends GetxController {
     _isExamStarted.value = true;
     _startTimer();
     
-    // Mark first question as visited
     if (_examQuestions.isNotEmpty) {
       _markQuestionAsVisited(0);
     }
@@ -197,13 +195,11 @@ class ExamInterfaceController extends GetxController {
       _examTimer?.cancel();
       _isExamCompleted.value = true;
       
-      // Calculate results
       final answeredQuestions = _examQuestions.where((q) => q.isAnswered).length;
       final correctAnswers = _examQuestions.where((q) => 
         q.isAnswered && q.selectedAnswer == q.question.correctAnswer
       ).length;
       
-      // Show results dialog
       Get.dialog(
         AlertDialog(
           title: Text('Exam Completed'),
@@ -220,8 +216,8 @@ class ExamInterfaceController extends GetxController {
           actions: [
             TextButton(
               onPressed: () {
-                Get.back(); // Close dialog
-                Get.back(); // Go back to previous screen
+                Get.back();
+                Get.back();
               },
               child: Text('OK'),
             ),
@@ -246,7 +242,7 @@ class ExamInterfaceController extends GetxController {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Are you sure you want to submit the exam?'),
-            if (unansweredCount > 0) ..[
+            if (unansweredCount > 0) ...<Widget>[
               SizedBox(height: 8),
               Text(
                 'You have $unansweredCount unanswered questions.',

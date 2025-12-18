@@ -4,6 +4,7 @@ class User {
   final String email;
   final String department;
   final String designation;
+  final String? employeeId;
   final List<String> purchasedModules;
   final DateTime lastLogin;
 
@@ -13,9 +14,10 @@ class User {
     required this.email,
     required this.department,
     required this.designation,
-    required this.purchasedModules,
-    required this.lastLogin,
-  });
+    this.employeeId,
+    this.purchasedModules = const [],
+    DateTime? lastLogin,
+  }) : lastLogin = lastLogin ?? DateTime.now();
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -24,8 +26,13 @@ class User {
       email: json['email'],
       department: json['department'],
       designation: json['designation'],
-      purchasedModules: List<String>.from(json['purchasedModules']),
-      lastLogin: DateTime.parse(json['lastLogin']),
+      employeeId: json['employeeId'],
+      purchasedModules: json['purchasedModules'] != null 
+          ? List<String>.from(json['purchasedModules'])
+          : [],
+      lastLogin: json['lastLogin'] != null 
+          ? DateTime.parse(json['lastLogin'])
+          : DateTime.now(),
     );
   }
 
@@ -36,6 +43,7 @@ class User {
       'email': email,
       'department': department,
       'designation': designation,
+      'employeeId': employeeId,
       'purchasedModules': purchasedModules,
       'lastLogin': lastLogin.toIso8601String(),
     };

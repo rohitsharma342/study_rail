@@ -49,7 +49,7 @@ class TestController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 1)); // Simulate API call
+      await Future.delayed(Duration(seconds: 1));
       _testSeries.value = StaticData.testSeries;
     } catch (e) {
       Get.snackbar('Error', 'Failed to load test series');
@@ -75,9 +75,8 @@ class TestController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate payment processing
+      await Future.delayed(Duration(seconds: 2));
       
-      // Update purchased status for selected tests
       for (String testId in _selectedTests) {
         final index = _testSeries.indexWhere((test) => test.id == testId);
         if (index != -1) {
@@ -118,7 +117,7 @@ class TestController extends GetxController {
     }
 
     _currentQuestionIndex.value = 0;
-    _remainingTime.value = test.duration * 60; // Convert to seconds
+    _remainingTime.value = test.duration * 60;
     _isTestActive.value = true;
     
     startTimer();
@@ -143,7 +142,7 @@ class TestController extends GetxController {
   }
 
   void nextQuestion() {
-    if (_currentQuestionIndex.value < 119) { // Assuming max 120 questions
+    if (_currentQuestionIndex.value < 119) {
       _currentQuestionIndex.value++;
     }
   }

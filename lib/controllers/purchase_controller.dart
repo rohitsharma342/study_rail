@@ -24,21 +24,18 @@ class PurchaseController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 1)); // Simulate API call
+      await Future.delayed(Duration(seconds: 1));
       
-      // Load purchased test series
       _purchasedTests.value = StaticData.testSeries
           .where((test) => test.isPurchased)
           .toList();
       
-      // Load purchased study materials
       _purchasedMaterials.value = StaticData.studyMaterials
           .where((material) => material.isPurchased)
           .toList();
       
-      // Calculate total spent
       double testTotal = _purchasedTests.fold(0.0, (sum, test) => sum + test.discountedPrice);
-      _totalSpent.value = testTotal; // Add material costs if applicable
+      _totalSpent.value = testTotal;
       
     } catch (e) {
       Get.snackbar('Error', 'Failed to load purchases');
@@ -59,9 +56,8 @@ class PurchaseController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate payment processing
+      await Future.delayed(Duration(seconds: 2));
       
-      // Find the test and add to purchased list
       final test = StaticData.testSeries.firstWhere((t) => t.id == testId);
       _purchasedTests.add(test);
       _totalSpent.value += test.discountedPrice;
@@ -80,9 +76,8 @@ class PurchaseController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate payment processing
+      await Future.delayed(Duration(seconds: 2));
       
-      // Find the material and add to purchased list
       final material = StaticData.studyMaterials.firstWhere((m) => m.id == materialId);
       _purchasedMaterials.add(material);
       
@@ -115,7 +110,7 @@ class PurchaseController extends GetxController {
         'title': test.title,
         'type': 'Test Series',
         'price': test.discountedPrice,
-        'purchaseDate': DateTime.now().subtract(Duration(days: 30)), // Mock data
+        'purchaseDate': DateTime.now().subtract(Duration(days: 30)),
       });
     }
     
@@ -124,12 +119,11 @@ class PurchaseController extends GetxController {
         'id': material.id,
         'title': material.title,
         'type': 'Study Material',
-        'price': 0.0, // Assuming materials are free or bundled
-        'purchaseDate': DateTime.now().subtract(Duration(days: 20)), // Mock data
+        'price': 0.0,
+        'purchaseDate': DateTime.now().subtract(Duration(days: 20)),
       });
     }
     
-    // Sort by purchase date
     history.sort((a, b) => (b['purchaseDate'] as DateTime).compareTo(a['purchaseDate']));
     
     return history;

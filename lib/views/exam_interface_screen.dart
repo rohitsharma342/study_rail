@@ -16,7 +16,6 @@ class ExamInterfaceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize exam when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!controller.isExamStarted && !controller.isLoading) {
         controller.initializeExam(exam);
@@ -81,7 +80,6 @@ class ExamInterfaceScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Container(
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Column(
@@ -109,7 +107,6 @@ class ExamInterfaceScreen extends StatelessWidget {
           
           Divider(),
           
-          // Instructions
           Expanded(
             child: SingleChildScrollView(
               child: Container(
@@ -136,7 +133,6 @@ class ExamInterfaceScreen extends StatelessWidget {
                     ),
                     SizedBox(height: 24),
                     
-                    // Question Status Legend
                     Text(
                       'QUESTION STATUS LEGEND',
                       style: TextStyle(
@@ -153,7 +149,6 @@ class ExamInterfaceScreen extends StatelessWidget {
             ),
           ),
           
-          // Start Button
           Container(
             width: double.infinity,
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -184,7 +179,6 @@ class ExamInterfaceScreen extends StatelessWidget {
   Widget _buildExamInterface() {
     return Column(
       children: [
-        // Top Bar with Timer and Info
         Container(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -222,17 +216,14 @@ class ExamInterfaceScreen extends StatelessWidget {
           ),
         ),
         
-        // Main Content
         Expanded(
           child: Row(
             children: [
-              // Question Area
               Expanded(
                 flex: controller.isPaletteVisible ? 3 : 1,
                 child: _buildQuestionArea(),
               ),
               
-              // Question Palette (if visible)
               if (controller.isPaletteVisible)
                 Container(
                   width: 300,
@@ -252,7 +243,6 @@ class ExamInterfaceScreen extends StatelessWidget {
           ),
         ),
         
-        // Bottom Navigation
         ExamNavigationBar(),
       ],
     );
@@ -270,7 +260,6 @@ class ExamInterfaceScreen extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Question Header
             Container(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Row(
@@ -310,7 +299,6 @@ class ExamInterfaceScreen extends StatelessWidget {
               ),
             ),
             
-            // Question Text
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -342,7 +330,7 @@ class ExamInterfaceScreen extends StatelessWidget {
                             ),
                           ),
                           
-                          if (currentQuestion.question.imageUrl != null) ..[
+                          if (currentQuestion.question.imageUrl != null) ...<Widget>[
                             SizedBox(height: 16),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
@@ -364,11 +352,10 @@ class ExamInterfaceScreen extends StatelessWidget {
                           
                           SizedBox(height: 24),
                           
-                          // MCQ Options
                           ...currentQuestion.question.options.asMap().entries.map((entry) {
                             final index = entry.key;
                             final option = entry.value;
-                            final optionLabel = String.fromCharCode(65 + index); // A, B, C, D
+                            final optionLabel = String.fromCharCode(65 + index);
                             
                             return MCQOptionWidget(
                               label: optionLabel,

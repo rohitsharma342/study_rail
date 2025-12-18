@@ -5,6 +5,8 @@ import '../models/study_material.dart';
 import '../models/exam.dart';
 
 class StaticData {
+  static User get currentUser => users.first;
+
   static final List<User> users = [
     User(
       id: '1',
@@ -13,6 +15,8 @@ class StaticData {
       designation: 'Station Master',
       department: 'Operations',
       employeeId: 'SM001',
+      purchasedModules: [],
+      lastLogin: DateTime.now(),
     ),
     User(
       id: '2',
@@ -21,6 +25,8 @@ class StaticData {
       designation: 'Assistant Station Master',
       department: 'Operations',
       employeeId: 'ASM002',
+      purchasedModules: [],
+      lastLogin: DateTime.now(),
     ),
   ];
 
@@ -63,6 +69,37 @@ class StaticData {
       startTime: DateTime.now().add(Duration(days: 5)),
       endTime: DateTime.now().add(Duration(days: 6)),
       thumbnailUrl: 'https://via.placeholder.com/300x200?text=Loco+Pilot+Test',
+    ),
+  ];
+
+  static final List<TestSeries> testSeries = [
+    TestSeries(
+      id: '1',
+      title: 'RRB NTPC Complete Series',
+      description: 'Complete test series for RRB NTPC examination',
+      type: 'Mock Test',
+      questionsCount: 100,
+      duration: 90,
+      price: 499.0,
+      discountedPrice: 399.0,
+      isPurchased: true,
+      scheduledDate: DateTime.now().add(Duration(days: 3)),
+      subjects: ['General Awareness', 'Mathematics', 'General Intelligence'],
+      imageUrl: 'https://via.placeholder.com/300x200?text=RRB+NTPC',
+    ),
+    TestSeries(
+      id: '2',
+      title: 'Station Master Preparation',
+      description: 'Complete preparation series for Station Master promotion',
+      type: 'Practice Test',
+      questionsCount: 120,
+      duration: 120,
+      price: 599.0,
+      discountedPrice: 449.0,
+      isPurchased: false,
+      scheduledDate: DateTime.now().add(Duration(days: 7)),
+      subjects: ['Railway Operations', 'Safety Rules', 'Commercial Rules'],
+      imageUrl: 'https://via.placeholder.com/300x200?text=Station+Master',
     ),
   ];
 
@@ -144,6 +181,7 @@ class StaticData {
       isPurchased: true,
       thumbnailUrl: 'https://via.placeholder.com/300x200?text=Operations+Manual',
       downloadUrl: 'https://example.com/railway-operations-manual.pdf',
+      url: 'https://example.com/railway-operations-manual.pdf',
     ),
     StudyMaterial(
       id: '2',
@@ -155,6 +193,7 @@ class StaticData {
       isPurchased: false,
       thumbnailUrl: 'https://via.placeholder.com/300x200?text=Signal+Handbook',
       downloadUrl: 'https://example.com/signal-handbook.pdf',
+      url: 'https://example.com/signal-handbook.pdf',
     ),
     StudyMaterial(
       id: '3',
@@ -166,6 +205,7 @@ class StaticData {
       isPurchased: true,
       thumbnailUrl: 'https://via.placeholder.com/300x200?text=Loco+Maintenance',
       downloadUrl: 'https://example.com/loco-maintenance-video.mp4',
+      url: 'https://example.com/loco-maintenance-video.mp4',
     ),
   ];
 
@@ -221,4 +261,11 @@ class StaticData {
       level: 'Advanced',
     ),
   ];
+
+  static final Map<String, List<dynamic>> leaderboardData = {};
+  static final List<dynamic> userTestResults = [];
+
+  static List<dynamic> getSubjectsForExam(String examId) {
+    return [];
+  }
 }

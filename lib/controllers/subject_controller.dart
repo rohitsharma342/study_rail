@@ -21,11 +21,6 @@ class SubjectController extends GetxController {
   void onInit() {
     super.onInit();
     loadSubjects();
-    
-    // Listen to exam changes
-    ever(examController.selectedExam.obs, (_) {
-      loadSubjects();
-    });
   }
 
   Future<void> loadSubjects() async {
@@ -34,8 +29,9 @@ class SubjectController extends GetxController {
     _isLoading.value = true;
     
     try {
-      await Future.delayed(Duration(milliseconds: 300)); // Simulate API call
-      _subjects.value = StaticData.getSubjectsForExam(examController.selectedExam!.id);
+      await Future.delayed(Duration(milliseconds: 300));
+      final subjectsData = StaticData.getSubjectsForExam(examController.selectedExam!.id);
+      _subjects.value = subjectsData.cast<Subject>();
       _updateSubjectProgress();
     } catch (e) {
       Get.snackbar('Error', 'Failed to load subjects');
@@ -46,7 +42,6 @@ class SubjectController extends GetxController {
 
   void selectSubject(Subject subject) {
     _selectedSubject.value = subject;
-    // Filter questions by selected subject
     questionController.filterQuestionsBySubject(subject.name);
   }
 

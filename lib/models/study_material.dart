@@ -2,13 +2,15 @@ class StudyMaterial {
   final String id;
   final String title;
   final String subject;
-  final String type; // video, document, test
+  final String type;
   final String url;
   final String description;
-  final int duration; // in minutes for videos
-  final int size; // in KB for documents
+  final int duration;
+  final int size;
+  final double price;
   final bool isPurchased;
   final String thumbnailUrl;
+  final String? downloadUrl;
   final DateTime uploadedDate;
 
   StudyMaterial({
@@ -18,12 +20,14 @@ class StudyMaterial {
     required this.type,
     required this.url,
     required this.description,
-    required this.duration,
-    required this.size,
-    required this.isPurchased,
+    this.duration = 0,
+    this.size = 0,
+    this.price = 0.0,
+    this.isPurchased = false,
     required this.thumbnailUrl,
-    required this.uploadedDate,
-  });
+    this.downloadUrl,
+    DateTime? uploadedDate,
+  }) : uploadedDate = uploadedDate ?? DateTime.now();
 
   String get formattedSize {
     if (size < 1024) {
@@ -52,11 +56,31 @@ class StudyMaterial {
       type: json['type'],
       url: json['url'],
       description: json['description'],
-      duration: json['duration'],
-      size: json['size'],
-      isPurchased: json['isPurchased'],
+      duration: json['duration'] ?? 0,
+      size: json['size'] ?? 0,
+      price: json['price']?.toDouble() ?? 0.0,
+      isPurchased: json['isPurchased'] ?? false,
       thumbnailUrl: json['thumbnailUrl'],
-      uploadedDate: DateTime.parse(json['uploadedDate']),
+      downloadUrl: json['downloadUrl'],
+      uploadedDate: json['uploadedDate'] != null ? DateTime.parse(json['uploadedDate']) : DateTime.now(),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'subject': subject,
+      'type': type,
+      'url': url,
+      'description': description,
+      'duration': duration,
+      'size': size,
+      'price': price,
+      'isPurchased': isPurchased,
+      'thumbnailUrl': thumbnailUrl,
+      'downloadUrl': downloadUrl,
+      'uploadedDate': uploadedDate.toIso8601String(),
+    };
   }
 }
