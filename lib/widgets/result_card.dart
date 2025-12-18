@@ -37,7 +37,7 @@ class ResultCard extends StatelessWidget {
             _buildScoreSection(),
             SizedBox(height: 12),
             _buildStatsSection(),
-            if (result.subjectWiseScores.isNotEmpty) ..[
+            if (result.subjectWiseScores.isNotEmpty) ...[
               SizedBox(height: 12),
               _buildSubjectWiseScores(),
             ],
