@@ -104,7 +104,7 @@ class PurchaseCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (price > 0) ..[
+                        if (price > 0) ...<Widget>[
                           Spacer(),
                           Text(
                             '₹${price.toStringAsFixed(0)}',
