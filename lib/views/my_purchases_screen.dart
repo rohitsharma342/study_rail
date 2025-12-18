@@ -186,7 +186,7 @@ class MyPurchasesScreen extends StatelessWidget {
                       .map((test) => PurchaseCard(
                             title: test.title,
                             description: test.description,
-                            imageUrl: test.imageUrl,
+                            imageUrl: test.imageUrl ?? '',
                             type: 'Test Series',
                             price: test.discountedPrice,
                             onAccess: () => Get.toNamed(AppRoutes.liveTests),
@@ -234,9 +234,9 @@ class MyPurchasesScreen extends StatelessWidget {
                       .map((material) => PurchaseCard(
                             title: material.title,
                             description: material.description,
-                            imageUrl: material.thumbnailUrl,
+                            imageUrl: material.thumbnailUrl ?? '',
                             type: 'Study Material',
-                            price: 0.0, // Materials might be free or bundled
+                            price: 0.0,
                             onAccess: () => Get.toNamed(AppRoutes.studyMaterial),
                           ))
                       .toList(),

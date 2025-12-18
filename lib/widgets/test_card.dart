@@ -19,6 +19,10 @@ class TestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final discountPercentage = test.price > 0 
+        ? ((test.price - test.discountedPrice) / test.price * 100)
+        : 0.0;
+
     return Card(
       margin: EdgeInsets.only(bottom: 16),
       elevation: 3,
@@ -37,7 +41,7 @@ class TestCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 child: CachedNetworkImage(
-                  imageUrl: test.imageUrl,
+                  imageUrl: test.imageUrl ?? '',
                   height: 160,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -94,7 +98,7 @@ class TestCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (test.discountPercentage > 0)
+              if (discountPercentage > 0)
                 Positioned(
                   bottom: 12,
                   right: 12,
@@ -105,7 +109,7 @@ class TestCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      '${test.discountPercentage.toStringAsFixed(0)}% OFF',
+                      '${discountPercentage.toStringAsFixed(0)}% OFF',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -215,7 +219,7 @@ class TestCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                if (test.scheduledDate.isAfter(DateTime.now()))
+                if (test.scheduledDate != null && test.scheduledDate!.isAfter(DateTime.now()))
                   Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Container(
@@ -233,7 +237,7 @@ class TestCard extends StatelessWidget {
                           ),
                           SizedBox(width: 4),
                           Text(
-                            'Scheduled: ${_formatDate(test.scheduledDate)}',
+                            'Scheduled: ${_formatDate(test.scheduledDate!)}',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppColors.warning,

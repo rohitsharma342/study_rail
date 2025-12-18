@@ -19,7 +19,10 @@ class AnswerFeedbackWidget extends StatelessWidget {
     }
 
     final isCorrect = question.isCorrect;
-    final correctOption = question.options[question.correctAnswer];
+    final correctAnswer = question.correctAnswer;
+    final correctOption = correctAnswer is int && correctAnswer >= 0 && correctAnswer < question.options.length
+        ? question.options[correctAnswer]
+        : 'N/A';
     
     return Container(
       margin: EdgeInsets.only(top: 16),
@@ -65,7 +68,7 @@ class AnswerFeedbackWidget extends StatelessWidget {
                         color: isCorrect ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctOption),
+                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctAnswer, correctOption),
                   ],
                 ),
               ),
@@ -77,11 +80,15 @@ class AnswerFeedbackWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildIncorrectAnswerInfo(String correctOption) {
+  List<Widget> _buildIncorrectAnswerInfo(dynamic correctAnswer, String correctOption) {
+    final answerLabel = correctAnswer is int && correctAnswer >= 0
+        ? String.fromCharCode(65 + correctAnswer)
+        : 'N/A';
+    
     return [
       SizedBox(height: 4),
       Text(
-        'Correct answer: ${String.fromCharCode(65 + question.correctAnswer)}. $correctOption',
+        'Correct answer: $answerLabel. $correctOption',
         style: TextStyle(
           fontSize: 12,
           color: AppColors.textSecondary,
