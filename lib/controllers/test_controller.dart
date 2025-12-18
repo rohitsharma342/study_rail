@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import '../models/test.dart';
 import '../services/static_data.dart';
+import '../utils/app_routes.dart';
 import 'dart:async';
 
 class TestController extends GetxController {
@@ -117,12 +118,10 @@ class TestController extends GetxController {
       return;
     }
 
-    _currentQuestionIndex.value = 0;
-    _remainingTime.value = test.duration * 60; // Convert to seconds
-    _isTestActive.value = true;
-    
-    startTimer();
-    Get.snackbar('Test Started', 'Good luck with your test!');
+    // Navigate to CBT Exam Screen
+    Get.toNamed(AppRoutes.cbtExam, arguments: {
+      'testId': testId,
+    });
   }
 
   void startTimer() {

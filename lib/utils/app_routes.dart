@@ -11,6 +11,8 @@ import '../views/question_interface_screen.dart';
 import '../views/exam_screen.dart';
 import '../views/subject_screen.dart';
 import '../views/leaderboard_screen.dart';
+import '../views/cbt_exam_screen.dart';
+import '../views/exam_result_screen.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -25,6 +27,8 @@ class AppRoutes {
   static const String studyMaterial = '/study-material';
   static const String myPurchases = '/my-purchases';
   static const String leaderboard = '/leaderboard';
+  static const String cbtExam = '/cbt-exam';
+  static const String examResult = '/exam-result';
 
   static List<GetPage> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
@@ -39,5 +43,7 @@ class AppRoutes {
     GetPage(name: studyMaterial, page: () => StudyMaterialScreen()),
     GetPage(name: myPurchases, page: () => MyPurchasesScreen()),
     GetPage(name: leaderboard, page: () => LeaderboardScreen()),
+    GetPage(name: cbtExam, page: () => CbtExamScreen()),
+    GetPage(name: examResult, page: () => ExamResultScreen()),
   ];
 }
