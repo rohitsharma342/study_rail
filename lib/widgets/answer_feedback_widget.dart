@@ -19,7 +19,16 @@ class AnswerFeedbackWidget extends StatelessWidget {
     }
 
     final isCorrect = question.isCorrect;
-    final correctOption = question.options[question.correctAnswer];
+    int correctAnswerInt = 0;
+    final correctAnswer = question.correctAnswer;
+    
+    if (correctAnswer is int) {
+      correctAnswerInt = correctAnswer;
+    } else if (correctAnswer is String) {
+      correctAnswerInt = int.tryParse(correctAnswer) ?? 0;
+    }
+    
+    final correctOption = question.options[correctAnswerInt];
     
     return Container(
       margin: EdgeInsets.only(top: 16),
@@ -65,7 +74,7 @@ class AnswerFeedbackWidget extends StatelessWidget {
                         color: isCorrect ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctOption),
+                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctOption, correctAnswerInt),
                   ],
                 ),
               ),
@@ -77,11 +86,11 @@ class AnswerFeedbackWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildIncorrectAnswerInfo(String correctOption) {
+  List<Widget> _buildIncorrectAnswerInfo(String correctOption, int correctAnswerIndex) {
     return [
       SizedBox(height: 4),
       Text(
-        'Correct answer: ${String.fromCharCode(65 + question.correctAnswer)}. $correctOption',
+        'Correct answer: ${String.fromCharCode(65 + correctAnswerIndex)}. $correctOption',
         style: TextStyle(
           fontSize: 12,
           color: AppColors.textSecondary,
