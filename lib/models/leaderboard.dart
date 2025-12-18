@@ -11,6 +11,7 @@ class LeaderboardEntry {
   final DateTime completedAt;
   final String department;
   final String designation;
+  final int? totalParticipants;
 
   LeaderboardEntry({
     required this.id,
@@ -25,6 +26,7 @@ class LeaderboardEntry {
     required this.completedAt,
     required this.department,
     required this.designation,
+    this.totalParticipants,
   });
 
   double get percentage => (score / totalQuestions) * 100;
@@ -49,6 +51,7 @@ class LeaderboardEntry {
     'completedAt': completedAt.toIso8601String(),
     'department': department,
     'designation': designation,
+    'totalParticipants': totalParticipants,
   };
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) => LeaderboardEntry(
@@ -64,5 +67,6 @@ class LeaderboardEntry {
     completedAt: DateTime.parse(json['completedAt']),
     department: json['department'],
     designation: json['designation'],
+    totalParticipants: json['totalParticipants'],
   );
 }

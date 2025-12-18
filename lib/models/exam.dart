@@ -5,8 +5,10 @@ class Exam {
   final String description;
   final List<String> subjects;
   final int totalQuestions;
-  final int duration; // in minutes
+  final int duration;
   final String level;
+  final String? iconUrl;
+  final int? color;
 
   Exam({
     required this.id,
@@ -17,6 +19,8 @@ class Exam {
     required this.totalQuestions,
     required this.duration,
     required this.level,
+    this.iconUrl,
+    this.color,
   });
 
   factory Exam.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,8 @@ class Exam {
       totalQuestions: json['totalQuestions'],
       duration: json['duration'],
       level: json['level'],
+      iconUrl: json['iconUrl'],
+      color: json['color'],
     );
   }
 
@@ -42,6 +48,8 @@ class Exam {
       'totalQuestions': totalQuestions,
       'duration': duration,
       'level': level,
+      'iconUrl': iconUrl,
+      'color': color,
     };
   }
 }

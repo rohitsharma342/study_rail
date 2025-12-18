@@ -12,7 +12,7 @@ class TestResult {
   final List<String> correctAnswers;
   final List<String> incorrectAnswers;
   final List<String> skippedQuestions;
-  final String status; // 'completed', 'abandoned', 'timeout'
+  final String status;
 
   TestResult({
     required this.id,
