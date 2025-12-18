@@ -10,6 +10,7 @@ import '../views/subject_list_screen.dart';
 import '../views/question_interface_screen.dart';
 import '../views/exam_screen.dart';
 import '../views/subject_screen.dart';
+import '../views/leaderboard_screen.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String questionInterface = '/question-interface';
   static const String studyMaterial = '/study-material';
   static const String myPurchases = '/my-purchases';
+  static const String leaderboard = '/leaderboard';
 
   static List<GetPage> pages = [
     GetPage(name: splash, page: () => SplashScreen()),
@@ -36,5 +38,6 @@ class AppRoutes {
     GetPage(name: questionInterface, page: () => QuestionInterfaceScreen()),
     GetPage(name: studyMaterial, page: () => StudyMaterialScreen()),
     GetPage(name: myPurchases, page: () => MyPurchasesScreen()),
+    GetPage(name: leaderboard, page: () => LeaderboardScreen()),
   ];
 }

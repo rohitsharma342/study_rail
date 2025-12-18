@@ -571,6 +571,14 @@ class DashboardScreen extends StatelessWidget {
               Get.toNamed(AppRoutes.myPurchases);
             },
           ),
+          ListTile(
+            leading: Icon(Icons.leaderboard),
+            title: Text('Leaderboard & Results'),
+            onTap: () {
+              Get.back();
+              Get.toNamed(AppRoutes.leaderboard);
+            },
+          ),
           Divider(),
           ListTile(
             leading: Icon(Icons.settings),
