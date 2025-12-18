@@ -1,167 +1,200 @@
 import 'package:get/get.dart';
-import '../models/test.dart';
-import '../services/static_data.dart';
-import '../utils/app_routes.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
+import '../models/test_model.dart';
+import '../models/question_model.dart';
+import '../services/data_service.dart';
+import 'auth_controller.dart';
 
 class TestController extends GetxController {
-  final RxList<TestSeries> _testSeries = <TestSeries>[].obs;
-  final RxList<String> _selectedTests = <String>[].obs;
-  final RxBool _isLoading = false.obs;
-  final RxInt _currentQuestionIndex = 0.obs;
-  final RxInt _remainingTime = 0.obs;
-  Timer? _testTimer;
-  final RxBool _isTestActive = false.obs;
-
-  List<TestSeries> get testSeries => _testSeries;
-  List<String> get selectedTests => _selectedTests;
-  bool get isLoading => _isLoading.value;
-  int get currentQuestionIndex => _currentQuestionIndex.value;
-  int get remainingTime => _remainingTime.value;
-  bool get isTestActive => _isTestActive.value;
-
-  double get totalPrice {
-    return _testSeries
-        .where((test) => _selectedTests.contains(test.id))
-        .fold(0.0, (sum, test) => sum + test.price);
-  }
-
-  double get totalDiscountedPrice {
-    return _testSeries
-        .where((test) => _selectedTests.contains(test.id))
-        .fold(0.0, (sum, test) => sum + test.discountedPrice);
-  }
-
-  double get totalSavings => totalPrice - totalDiscountedPrice;
+  final DataService _dataService = DataService();
+  final AuthController authController = Get.find<AuthController>();
+  
+  final RxList<TestModel> tests = <TestModel>[].obs;
+  final RxList<TestModel> selectedTests = <TestModel>[].obs;
+  final RxList<QuestionModel> testQuestions = <QuestionModel>[].obs;
+  final RxInt currentQuestionIndex = 0.obs;
+  final RxInt timeRemaining = 0.obs;
+  final RxBool isTestActive = false.obs;
+  final RxString selectedFilter = 'All'.obs;
+  
+  Timer? _timer;
 
   @override
   void onInit() {
     super.onInit();
-    loadTestSeries();
+    loadTests();
   }
 
   @override
   void onClose() {
-    _testTimer?.cancel();
+    _timer?.cancel();
     super.onClose();
   }
 
-  Future<void> loadTestSeries() async {
-    _isLoading.value = true;
-    
-    try {
-      await Future.delayed(Duration(seconds: 1)); // Simulate API call
-      _testSeries.value = StaticData.testSeries;
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to load test series');
-    } finally {
-      _isLoading.value = false;
+  void loadTests() {
+    final testData = _dataService.getTestData();
+    tests.value = testData.map((data) => TestModel.fromJson(data)).toList();
+  }
+
+  List<TestModel> get filteredTests {
+    if (selectedFilter.value == 'All') {
+      return tests;
+    }
+    return tests.where((test) => test.category == selectedFilter.value).toList();
+  }
+
+  void toggleTestSelection(TestModel test) {
+    if (selectedTests.contains(test)) {
+      selectedTests.remove(test);
+    } else {
+      selectedTests.add(test);
     }
   }
 
-  void toggleTestSelection(String testId) {
-    if (_selectedTests.contains(testId)) {
-      _selectedTests.remove(testId);
-    } else {
-      _selectedTests.add(testId);
-    }
+  double get totalOriginalPrice {
+    return selectedTests.fold(0.0, (sum, test) => sum + test.price);
   }
+
+  double get totalDiscountedPrice {
+    return selectedTests.fold(0.0, (sum, test) => sum + test.discountedPrice);
+  }
+
+  double get totalSavings => totalOriginalPrice - totalDiscountedPrice;
 
   Future<bool> purchaseSelectedTests() async {
-    if (_selectedTests.isEmpty) {
-      Get.snackbar('Error', 'Please select at least one test series');
-      return false;
-    }
-
-    _isLoading.value = true;
-    
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate payment processing
+      // Simulate payment processing
+      await Future.delayed(Duration(seconds: 2));
       
-      // Update purchased status for selected tests
-      for (String testId in _selectedTests) {
-        final index = _testSeries.indexWhere((test) => test.id == testId);
-        if (index != -1) {
-          _testSeries[index] = TestSeries(
-            id: _testSeries[index].id,
-            title: _testSeries[index].title,
-            description: _testSeries[index].description,
-            type: _testSeries[index].type,
-            questionsCount: _testSeries[index].questionsCount,
-            duration: _testSeries[index].duration,
-            price: _testSeries[index].price,
-            discountedPrice: _testSeries[index].discountedPrice,
-            isPurchased: true,
-            scheduledDate: _testSeries[index].scheduledDate,
-            subjects: _testSeries[index].subjects,
-            imageUrl: _testSeries[index].imageUrl,
-          );
-        }
+      for (var test in selectedTests) {
+        authController.purchaseTest(test.id);
       }
       
-      _selectedTests.clear();
-      Get.snackbar('Success', 'Purchase completed successfully!');
+      selectedTests.clear();
+      loadTests(); // Refresh to update purchase status
+      
+      Get.snackbar(
+        'Success',
+        'Tests purchased successfully!',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      
       return true;
     } catch (e) {
-      Get.snackbar('Error', 'Purchase failed. Please try again.');
+      Get.snackbar(
+        'Error',
+        'Purchase failed. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return false;
-    } finally {
-      _isLoading.value = false;
     }
   }
 
-  void startTest(String testId) {
-    final test = _testSeries.firstWhere((t) => t.id == testId);
-    
-    if (!test.isPurchased) {
-      Get.snackbar('Error', 'Please purchase this test series first');
+  void startTest(TestModel test) {
+    if (!authController.user!.hasAccessToTest(test.id)) {
+      Get.snackbar(
+        'Access Denied',
+        'Please purchase this test to access it.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
       return;
     }
 
-    // Navigate to CBT Exam Screen
-    Get.toNamed(AppRoutes.cbtExam, arguments: {
-      'testId': testId,
-    });
+    final questions = _dataService.getTestQuestions(test.id);
+    testQuestions.value = questions.map((q) => QuestionModel.fromJson(q)).toList();
+    currentQuestionIndex.value = 0;
+    timeRemaining.value = test.duration * 60; // Convert to seconds
+    isTestActive.value = true;
+    
+    _startTimer();
   }
 
-  void startTimer() {
-    _testTimer?.cancel();
-    _testTimer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_remainingTime.value > 0) {
-        _remainingTime.value--;
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (timeRemaining.value > 0) {
+        timeRemaining.value--;
       } else {
-        endTest();
+        submitTest();
       }
     });
   }
 
-  void endTest() {
-    _testTimer?.cancel();
-    _isTestActive.value = false;
-    Get.snackbar('Test Completed', 'Your test has been submitted');
-  }
-
   void nextQuestion() {
-    if (_currentQuestionIndex.value < 119) { // Assuming max 120 questions
-      _currentQuestionIndex.value++;
+    if (currentQuestionIndex.value < testQuestions.length - 1) {
+      currentQuestionIndex.value++;
     }
   }
 
   void previousQuestion() {
-    if (_currentQuestionIndex.value > 0) {
-      _currentQuestionIndex.value--;
+    if (currentQuestionIndex.value > 0) {
+      currentQuestionIndex.value--;
     }
   }
 
-  void jumpToQuestion(int index) {
-    _currentQuestionIndex.value = index;
+  void selectAnswer(int optionIndex) {
+    final currentQuestion = testQuestions[currentQuestionIndex.value];
+    currentQuestion.selectedAnswer = optionIndex.toString();
+    testQuestions[currentQuestionIndex.value] = currentQuestion;
   }
 
-  String getFormattedTime() {
-    int hours = _remainingTime.value ~/ 3600;
-    int minutes = (_remainingTime.value % 3600) ~/ 60;
-    int seconds = _remainingTime.value % 60;
+  void markForReview() {
+    final currentQuestion = testQuestions[currentQuestionIndex.value];
+    currentQuestion.isMarkedForReview = !currentQuestion.isMarkedForReview;
+    testQuestions[currentQuestionIndex.value] = currentQuestion;
+  }
+
+  void jumpToQuestion(int index) {
+    if (index >= 0 && index < testQuestions.length) {
+      currentQuestionIndex.value = index;
+    }
+  }
+
+  void submitTest() {
+    _timer?.cancel();
+    isTestActive.value = false;
     
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    int correctAnswers = 0;
+    int totalAnswered = 0;
+    
+    for (var question in testQuestions) {
+      if (question.isAnswered) {
+        totalAnswered++;
+        if (question.isCorrect) {
+          correctAnswers++;
+        }
+      }
+    }
+    
+    final score = (correctAnswers / testQuestions.length) * 100;
+    
+    Get.dialog(
+      AlertDialog(
+        title: Text('Test Completed'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Score: ${score.toStringAsFixed(1)}%'),
+            Text('Correct: $correctAnswers/${testQuestions.length}'),
+            Text('Attempted: $totalAnswered/${testQuestions.length}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.back(); // Go back to tests list
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String get formattedTimeRemaining {
+    final minutes = timeRemaining.value ~/ 60;
+    final seconds = timeRemaining.value % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

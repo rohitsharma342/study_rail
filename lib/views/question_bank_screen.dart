@@ -1,49 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import '../controllers/question_controller.dart';
-import '../controllers/exam_controller.dart';
-import '../controllers/subject_controller.dart';
-import '../utils/app_colors.dart';
 import '../utils/constants.dart';
+import '../controllers/question_controller.dart';
 import '../widgets/custom_app_bar.dart';
-import '../widgets/question_card.dart';
-import 'exam_screen.dart';
+import '../widgets/question_widget.dart';
 
 class QuestionBankScreen extends StatelessWidget {
-  final QuestionController questionController = Get.put(QuestionController());
-  final ExamController examController = Get.put(ExamController());
-  final SubjectController subjectController = Get.put(SubjectController());
+  final QuestionController questionController = Get.find<QuestionController>();
 
   @override
   Widget build(BuildContext context) {
-    // Navigate to the new exam selection screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.off(() => ExamScreen());
-    });
-
     return Scaffold(
-      appBar: CustomAppBar(title: 'Question Bank'),
-      body: Obx(
-        () => questionController.isLoading
-            ? Center(child: CircularProgressIndicator())
-            : Column(
-                children: [
-                  _buildFilterSection(),
-                  _buildProgressSection(),
-                  Expanded(child: _buildQuestionSection()),
-                  _buildNavigationSection(),
-                ],
-              ),
+      backgroundColor: AppColors.background,
+      appBar: CustomAppBar(title: AppStrings.questionBank),
+      body: Column(
+        children: [
+          _buildFiltersSection(),
+          _buildSearchBar(),
+          Expanded(
+            child: Obx(() {
+              final question = questionController.currentQuestion;
+              if (question == null) {
+                return _buildEmptyState();
+              }
+              return _buildQuestionView(question);
+            }),
+          ),
+          _buildNavigationControls(),
+        ],
       ),
     );
   }
 
-  Widget _buildFilterSection() {
+  Widget _buildFiltersSection() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -53,266 +46,244 @@ class QuestionBankScreen extends StatelessWidget {
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search questions...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.divider),
-              ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          Text(
+            'Filter by Subjects',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
             ),
-            onChanged: (value) {
-              questionController.updateSearchQuery(value);
-            },
           ),
-          SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('All Subjects', questionController.selectedSubjects.isEmpty, () {
-                  questionController.clearFilters();
-                }),
-                ...AppConstants.subjects.map((subject) {
-                  return _buildFilterChip(
-                    subject,
-                    questionController.selectedSubjects.contains(subject),
-                    () {
-                      questionController.toggleSubjectFilter(subject);
-                    },
-                  );
-                }).toList(),
-              ],
-            ),
+          SizedBox(height: AppSizes.paddingSmall),
+          Obx(() => Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: questionController.subjects.map((subject) {
+              final isSelected = questionController.selectedSubjects.contains(subject);
+              final hasAccess = questionController.hasAccessToSubject(subject);
+              
+              return FilterChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      subject,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : 
+                                hasAccess ? AppColors.textPrimary : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (!hasAccess) ...[
+                      SizedBox(width: 4),
+                      Icon(
+                        Icons.lock,
+                        size: 14,
+                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                      ),
+                    ],
+                  ],
+                ),
+                selected: isSelected,
+                onSelected: (selected) {
+                  if (!hasAccess) {
+                    questionController.purchaseSubjectAccess(subject);
+                  } else {
+                    questionController.toggleSubjectFilter(subject);
+                  }
+                },
+                selectedColor: AppColors.primary,
+                backgroundColor: hasAccess ? null : Colors.grey[200],
+                disabledColor: Colors.grey[200],
+                checkmarkColor: Colors.white,
+              );
+            }).toList(),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search questions...',
+          prefixIcon: Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+        ),
+        onChanged: (value) {
+          questionController.updateSearchQuery(value);
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuestionView(question) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      child: Column(
+        children: [
+          _buildQuestionInfo(question),
+          SizedBox(height: AppSizes.paddingMedium),
+          QuestionWidget(
+            question: question,
+            onAnswerSelected: (index) => questionController.selectAnswer(index),
+            showExplanation: true,
+            isPracticeMode: true,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
-    return Padding(
-      padding: EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontSize: 12,
-          ),
-        ),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        backgroundColor: Colors.grey[200],
-        selectedColor: AppColors.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressSection() {
+  Widget _buildQuestionInfo(question) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2)),
       ),
-      child: Obx(
-        () => Column(
-          children: [
-            LinearPercentIndicator(
-              width: Get.width - 32,
-              lineHeight: 8,
-              percent: questionController.progressPercentage / 100,
-              backgroundColor: Colors.grey[300],
-              progressColor: AppColors.primary,
-              barRadius: Radius.circular(4),
-            ),
-            SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildStatItem(
-                  'Total',
-                  questionController.filteredQuestions.length.toString(),
-                  AppColors.textSecondary,
-                ),
-                _buildStatItem(
-                  'Answered',
-                  questionController.answeredCount.toString(),
-                  AppColors.success,
-                ),
-                _buildStatItem(
-                  'Marked',
-                  questionController.markedForReviewCount.toString(),
-                  AppColors.warning,
-                ),
-                _buildStatItem(
-                  'Progress',
-                  '${questionController.progressPercentage.toStringAsFixed(0)}%',
-                  AppColors.primary,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuestionSection() {
-    return Obx(
-      () {
-        final question = questionController.currentQuestion;
-        
-        if (question == null) {
-          return Center(
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.search_off,
-                  size: 64,
-                  color: AppColors.textSecondary,
-                ),
-                SizedBox(height: 16),
                 Text(
-                  'No questions found',
+                  'Subject: ${question.subject}',
                   style: TextStyle(
-                    fontSize: 18,
-                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-                SizedBox(height: 8),
                 Text(
-                  'Try adjusting your filters',
+                  'Difficulty: ${question.difficulty}',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
+                    color: _getDifficultyColor(question.difficulty),
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
-          );
-        }
-        
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: QuestionCard(
-            question: question,
-            questionNumber: questionController.currentQuestionIndex + 1,
-            totalQuestions: questionController.filteredQuestions.length,
-            onAnswerSelected: (answer) {
-              questionController.selectAnswer(answer);
-            },
-            onMarkForReview: () {
-              questionController.toggleMarkForReview();
-            },
           ),
-        );
-      },
+          Obx(() {
+            final totalQuestions = questionController.filteredQuestions.length;
+            final currentIndex = questionController.currentQuestionIndex.value;
+            return Text(
+              '${currentIndex + 1} of $totalQuestions',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.textSecondary,
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
 
-  Widget _buildNavigationSection() {
+  Widget _buildNavigationControls() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withOpacity(0.2),
             blurRadius: 4,
             offset: Offset(0, -2),
           ),
         ],
       ),
-      child: Obx(
-        () => Row(
-          children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: questionController.currentQuestionIndex > 0
-                    ? () => questionController.previousQuestion()
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.textSecondary,
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.arrow_back, size: 16),
-                    SizedBox(width: 4),
-                    Text('Previous'),
-                  ],
-                ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Obx(() => ElevatedButton(
+              onPressed: questionController.currentQuestionIndex.value > 0
+                  ? () => questionController.previousQuestion()
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[300],
+                foregroundColor: Colors.black,
               ),
-            ),
-            SizedBox(width: 16),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '${questionController.currentQuestionIndex + 1} / ${questionController.filteredQuestions.length}',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: questionController.currentQuestionIndex < 
-                        questionController.filteredQuestions.length - 1
+              child: Text(AppStrings.previous),
+            )),
+          ),
+          SizedBox(width: AppSizes.paddingMedium),
+          Expanded(
+            child: Obx(() {
+              final totalQuestions = questionController.filteredQuestions.length;
+              final currentIndex = questionController.currentQuestionIndex.value;
+              
+              return ElevatedButton(
+                onPressed: currentIndex < totalQuestions - 1
                     ? () => questionController.nextQuestion()
                     : null,
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Next'),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward, size: 16),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+                child: Text(AppStrings.next),
+              );
+            }),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.quiz_outlined,
+            size: 64,
+            color: AppColors.textSecondary,
+          ),
+          SizedBox(height: AppSizes.paddingMedium),
+          Text(
+            'No Questions Available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: AppSizes.paddingSmall),
+          Text(
+            'Select subjects to practice questions',
+            style: TextStyle(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: AppSizes.paddingLarge),
+          ElevatedButton(
+            onPressed: () {
+              // Scroll to top to show filters
+            },
+            child: Text('Select Subjects'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getDifficultyColor(String difficulty) {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return AppColors.success;
+      case 'medium':
+        return AppColors.warning;
+      case 'hard':
+        return AppColors.error;
+      default:
+        return AppColors.textSecondary;
+    }
   }
 }

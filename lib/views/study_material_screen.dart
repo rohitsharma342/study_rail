@@ -1,53 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../controllers/purchase_controller.dart';
-import '../utils/app_colors.dart';
 import '../utils/constants.dart';
-import '../services/static_data.dart';
+import '../controllers/study_material_controller.dart';
 import '../widgets/custom_app_bar.dart';
 
-class StudyMaterialScreen extends StatefulWidget {
-  @override
-  _StudyMaterialScreenState createState() => _StudyMaterialScreenState();
-}
-
-class _StudyMaterialScreenState extends State<StudyMaterialScreen>
-    with SingleTickerProviderStateMixin {
-  final PurchaseController purchaseController = Get.find<PurchaseController>();
-  late TabController _tabController;
-  String selectedSubject = AppConstants.subjects.first;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+class StudyMaterialScreen extends StatelessWidget {
+  final StudyMaterialController controller = Get.find<StudyMaterialController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: 'Study Material'),
+      backgroundColor: AppColors.background,
+      appBar: CustomAppBar(title: AppStrings.studyMaterial),
       body: Column(
         children: [
           _buildSubjectSelector(),
+          _buildSearchBar(),
           _buildTabBar(),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildVideosList(),
-                _buildDocumentsList(),
-                _buildTestsList(),
-              ],
-            ),
+            child: Obx(() => _buildMaterialsList()),
           ),
+          if (controller.selectedTab.value == 'Tests') _buildDownloadAllButton(),
         ],
       ),
     );
@@ -55,9 +29,9 @@ class _StudyMaterialScreenState extends State<StudyMaterialScreen>
 
   Widget _buildSubjectSelector() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
@@ -72,274 +46,228 @@ class _StudyMaterialScreenState extends State<StudyMaterialScreen>
           Text(
             'Select Subject',
             style: TextStyle(
-              fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              fontSize: 16,
             ),
           ),
-          SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: selectedSubject,
+          SizedBox(height: AppSizes.paddingSmall),
+          Obx(() => DropdownButtonFormField<String>(
+            value: controller.selectedSubject.value.isEmpty 
+                ? null 
+                : controller.selectedSubject.value,
             decoration: InputDecoration(
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              filled: true,
+              fillColor: AppColors.background,
             ),
-            items: AppConstants.subjects.map((subject) {
-              return DropdownMenuItem(
+            items: controller.subjects.map((subject) {
+              final hasAccess = controller.hasAccessToSubject(subject);
+              return DropdownMenuItem<String>(
                 value: subject,
-                child: Text(subject),
+                child: Row(
+                  children: [
+                    Text(
+                      subject,
+                      style: TextStyle(
+                        color: hasAccess ? AppColors.textPrimary : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (!hasAccess) ...[
+                      SizedBox(width: 8),
+                      Icon(
+                        Icons.lock,
+                        size: 16,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ],
+                ),
               );
             }).toList(),
             onChanged: (value) {
               if (value != null) {
-                setState(() {
-                  selectedSubject = value;
-                });
+                controller.selectSubject(value);
               }
             },
-          ),
+            hint: Text('Choose a subject'),
+          )),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: 'Search study materials...',
+          prefixIcon: Icon(Icons.search),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+        ),
+        onChanged: (value) {
+          controller.updateSearchQuery(value);
+        },
       ),
     );
   }
 
   Widget _buildTabBar() {
     return Container(
+      margin: EdgeInsets.symmetric(horizontal: AppSizes.paddingMedium),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            blurRadius: 2,
-            offset: Offset(0, 1),
+            blurRadius: 4,
+            offset: Offset(0, 2),
           ),
         ],
       ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.textSecondary,
-        indicatorColor: AppColors.primary,
-        tabs: [
-          Tab(
-            icon: Icon(Icons.play_circle_outline),
-            text: 'Videos',
-          ),
-          Tab(
-            icon: Icon(Icons.description_outlined),
-            text: 'Documents',
-          ),
-          Tab(
-            icon: Icon(Icons.quiz_outlined),
-            text: 'Tests',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVideosList() {
-    final videos = StaticData.studyMaterials
-        .where((material) =>
-            material.type == 'video' && material.subject == selectedSubject)
-        .toList();
-
-    if (videos.isEmpty) {
-      return _buildEmptyState('No videos available for this subject');
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: videos.length,
-      itemBuilder: (context, index) {
-        final video = videos[index];
-        return _buildVideoCard(video);
-      },
-    );
-  }
-
-  Widget _buildDocumentsList() {
-    final documents = StaticData.studyMaterials
-        .where((material) =>
-            material.type == 'document' && material.subject == selectedSubject)
-        .toList();
-
-    if (documents.isEmpty) {
-      return _buildEmptyState('No documents available for this subject');
-    }
-
-    return ListView.builder(
-      padding: EdgeInsets.all(16),
-      itemCount: documents.length,
-      itemBuilder: (context, index) {
-        final document = documents[index];
-        return _buildDocumentCard(document);
-      },
-    );
-  }
-
-  Widget _buildTestsList() {
-    final tests = StaticData.studyMaterials
-        .where((material) =>
-            material.type == 'test' && material.subject == selectedSubject)
-        .toList();
-
-    return Column(
-      children: [
-        if (tests.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  _downloadAllTests();
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  backgroundColor: AppColors.success,
+      child: Obx(() => Row(
+        children: controller.availableTabs.map((tab) {
+          final isSelected = controller.selectedTab.value == tab;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => controller.selectTab(tab),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: AppSizes.paddingMedium,
+                  horizontal: AppSizes.paddingSmall,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                 ),
                 child: Text(
-                  'Download All Tests',
+                  tab,
+                  textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
             ),
-          ),
-        Expanded(
-          child: tests.isEmpty
-              ? _buildEmptyState('No test files available for this subject')
-              : ListView.builder(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: tests.length,
-                  itemBuilder: (context, index) {
-                    final test = tests[index];
-                    return _buildTestCard(test);
-                  },
-                ),
-        ),
-      ],
+          );
+        }).toList(),
+      )),
     );
   }
 
-  Widget _buildVideoCard(material) {
+  Widget _buildMaterialsList() {
+    final materials = controller.filteredMaterials;
+    
+    if (materials.isEmpty) {
+      return _buildEmptyState();
+    }
+    
+    return ListView.builder(
+      padding: EdgeInsets.all(AppSizes.paddingMedium),
+      itemCount: materials.length,
+      itemBuilder: (context, index) {
+        final material = materials[index];
+        return _buildMaterialCard(material);
+      },
+    );
+  }
+
+  Widget _buildMaterialCard(material) {
+    final hasAccess = controller.hasAccessToMaterial(material);
+    
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: AppSizes.paddingMedium),
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                child: CachedNetworkImage(
-                  imageUrl: material.thumbnailUrl,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    height: 180,
-                    color: AppColors.background,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 180,
-                    color: AppColors.background,
-                    child: Center(
-                      child: Icon(Icons.image_not_supported, size: 50),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    material.formattedDuration,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: Center(
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 30,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          if (material.type == 'video') _buildVideoThumbnail(material),
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppSizes.paddingMedium),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  material.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      _getTypeIcon(material.type),
+                      size: 20,
+                      color: AppColors.primary,
+                    ),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        material.title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: hasAccess ? AppColors.textPrimary : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    if (!hasAccess)
+                      Icon(
+                        Icons.lock,
+                        size: 20,
+                        color: AppColors.textSecondary,
+                      ),
+                  ],
                 ),
                 SizedBox(height: 8),
                 Text(
                   material.description,
                   style: TextStyle(
-                    fontSize: 14,
                     color: AppColors.textSecondary,
+                    fontSize: 14,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildStatusChip(material.isPurchased),
-                    ElevatedButton(
-                      onPressed: material.isPurchased
-                          ? () => _playVideo(material)
-                          : () => _purchaseAccess(material),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: material.isPurchased
-                            ? AppColors.primary
-                            : AppColors.warning,
+                    if (material.type == 'video' && material.duration != null) ...[
+                      Icon(
+                        Icons.schedule,
+                        size: 14,
+                        color: AppColors.textSecondary,
                       ),
-                      child: Text(
-                        material.isPurchased ? 'Play' : 'Purchase',
-                        style: TextStyle(fontSize: 12),
+                      SizedBox(width: 4),
+                      Text(
+                        material.formattedDuration,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
+                    ],
+                    if (material.size != null) ...[
+                      if (material.type == 'video') SizedBox(width: 16),
+                      Icon(
+                        Icons.file_download,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        material.formattedSize,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    Spacer(),
+                    _buildActionButton(material, hasAccess),
                   ],
                 ),
               ],
@@ -350,175 +278,150 @@ class _StudyMaterialScreenState extends State<StudyMaterialScreen>
     );
   }
 
-  Widget _buildDocumentCard(material) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+  Widget _buildVideoThumbnail(material) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppSizes.radiusMedium),
           ),
-          child: Icon(
-            Icons.picture_as_pdf,
-            color: AppColors.error,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          material.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text(
-              material.description,
-              style: TextStyle(color: AppColors.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+          child: CachedNetworkImage(
+            imageUrl: material.thumbnailUrl,
+            height: 120,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: Colors.grey[200],
+              child: Center(child: CircularProgressIndicator()),
             ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                _buildStatusChip(material.isPurchased),
-                Spacer(),
-                Text(
-                  material.formattedSize,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            errorWidget: (context, url, error) => Container(
+              color: Colors.grey[200],
+              child: Icon(Icons.error),
+            ),
+          ),
+        ),
+        Positioned.fill(
+          child: Center(
+            child: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.play_arrow,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(material, bool hasAccess) {
+    if (!hasAccess) {
+      return ElevatedButton(
+        onPressed: () => controller.showPurchaseDialog(material.subject),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.warning,
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
+        child: Text(
+          'Purchase',
+          style: TextStyle(fontSize: 12),
+        ),
+      );
+    }
+    
+    switch (material.type) {
+      case 'video':
+        return ElevatedButton.icon(
+          onPressed: () => controller.playVideo(material),
+          icon: Icon(Icons.play_arrow, size: 16),
+          label: Text('Play', style: TextStyle(fontSize: 12)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.success,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        );
+      case 'document':
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => controller.viewDocument(material),
+              icon: Icon(Icons.visibility, size: 16),
+              label: Text('View', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+            SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: () => controller.downloadMaterial(material),
+              icon: Icon(Icons.download, size: 16),
+              label: Text('Download', style: TextStyle(fontSize: 12)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              ),
+            ),
+          ],
+        );
+      case 'test':
+        return ElevatedButton.icon(
+          onPressed: () => controller.downloadMaterial(material),
+          icon: Icon(Icons.download, size: 16),
+          label: Text('Download', style: TextStyle(fontSize: 12)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.secondary,
+            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
+        );
+      default:
+        return SizedBox.shrink();
+    }
+  }
+
+  Widget _buildDownloadAllButton() {
+    return Obx(() {
+      if (!controller.hasAccessToSubject(controller.selectedSubject.value)) {
+        return SizedBox.shrink();
+      }
+      
+      return Container(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              blurRadius: 4,
+              offset: Offset(0, -2),
             ),
           ],
         ),
-        trailing: ElevatedButton(
-          onPressed: material.isPurchased
-              ? () => _downloadDocument(material)
-              : () => _purchaseAccess(material),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: material.isPurchased
-                ? AppColors.primary
-                : AppColors.warning,
-            minimumSize: Size(80, 36),
-          ),
-          child: Text(
-            material.isPurchased ? 'Download' : 'Purchase',
-            style: TextStyle(fontSize: 12),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTestCard(material) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(
-            Icons.quiz,
-            color: AppColors.primary,
-            size: 24,
-          ),
-        ),
-        title: Text(
-          material.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 4),
-            Text(
-              material.description,
-              style: TextStyle(color: AppColors.textSecondary),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+        child: SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => controller.downloadAllTests(),
+            icon: Icon(Icons.cloud_download),
+            label: Text('Download All Tests'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: EdgeInsets.symmetric(vertical: 12),
             ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                _buildStatusChip(material.isPurchased),
-                Spacer(),
-                Text(
-                  material.formattedSize,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        trailing: ElevatedButton(
-          onPressed: material.isPurchased
-              ? () => _downloadTest(material)
-              : () => _purchaseAccess(material),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: material.isPurchased
-                ? AppColors.primary
-                : AppColors.warning,
-            minimumSize: Size(80, 36),
-          ),
-          child: Text(
-            material.isPurchased ? 'Download' : 'Purchase',
-            style: TextStyle(fontSize: 12),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
-  Widget _buildStatusChip(bool isPurchased) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isPurchased
-            ? AppColors.success.withOpacity(0.1)
-            : AppColors.warning.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        isPurchased ? 'Purchased' : 'Premium',
-        style: TextStyle(
-          color: isPurchased ? AppColors.success : AppColors.warning,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -528,11 +431,19 @@ class _StudyMaterialScreenState extends State<StudyMaterialScreen>
             size: 64,
             color: AppColors.textSecondary,
           ),
-          SizedBox(height: 16),
+          SizedBox(height: AppSizes.paddingMedium),
           Text(
-            message,
+            'No Study Materials Found',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: AppSizes.paddingSmall),
+          Text(
+            'Select a subject to view available materials',
+            style: TextStyle(
               color: AppColors.textSecondary,
             ),
             textAlign: TextAlign.center,
@@ -542,57 +453,16 @@ class _StudyMaterialScreenState extends State<StudyMaterialScreen>
     );
   }
 
-  void _playVideo(material) {
-    Get.snackbar(
-      'Playing Video',
-      'Opening ${material.title}',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  void _downloadDocument(material) {
-    Get.snackbar(
-      'Download Started',
-      'Downloading ${material.title}',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  void _downloadTest(material) {
-    Get.snackbar(
-      'Download Started',
-      'Downloading ${material.title}',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  void _downloadAllTests() {
-    Get.snackbar(
-      'Download Started',
-      'Downloading all test files for $selectedSubject',
-      snackPosition: SnackPosition.BOTTOM,
-    );
-  }
-
-  void _purchaseAccess(material) {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Purchase Required'),
-        content: Text('You need to purchase access to view this ${material.type}.'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              purchaseController.purchaseMaterial(material.id);
-            },
-            child: Text('Purchase'),
-          ),
-        ],
-      ),
-    );
+  IconData _getTypeIcon(String type) {
+    switch (type) {
+      case 'video':
+        return Icons.play_circle_fill;
+      case 'document':
+        return Icons.description;
+      case 'test':
+        return Icons.quiz;
+      default:
+        return Icons.file_copy;
+    }
   }
 }

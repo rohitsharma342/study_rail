@@ -1,145 +1,156 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../utils/app_colors.dart';
+import '../utils/constants.dart';
 
 class PurchaseCard extends StatelessWidget {
   final String title;
   final String description;
-  final String imageUrl;
-  final String type;
-  final double price;
-  final VoidCallback onAccess;
+  final double originalPrice;
+  final double discountedPrice;
+  final VoidCallback onPurchase;
+  final bool isSelected;
+  final VoidCallback? onSelectionChanged;
 
   const PurchaseCard({
     Key? key,
     required this.title,
     required this.description,
-    required this.imageUrl,
-    required this.type,
-    required this.price,
-    required this.onAccess,
+    required this.originalPrice,
+    required this.discountedPrice,
+    required this.onPurchase,
+    this.isSelected = false,
+    this.onSelectionChanged,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final savings = originalPrice - discountedPrice;
+    final discountPercentage = ((originalPrice - discountedPrice) / originalPrice) * 100;
+
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
-      elevation: 2,
+      elevation: isSelected ? 4 : 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        side: BorderSide(
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          width: 2,
+        ),
       ),
-      child: InkWell(
-        onTap: onAccess,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrl,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    width: 80,
-                    height: 80,
-                    color: AppColors.background,
-                    child: Center(
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                if (onSelectionChanged != null)
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (_) => onSelectionChanged?.call(),
+                    activeColor: AppColors.primary,
                   ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 80,
-                    height: 80,
-                    color: AppColors.background,
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: AppColors.textSecondary,
-                    ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getTypeColor().withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            type,
-                            style: TextStyle(
-                              color: _getTypeColor(),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+              ],
+            ),
+            SizedBox(height: AppSizes.paddingMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (discountedPrice < originalPrice) ..[
+                        Text(
+                          '₹${originalPrice.toInt()}',
+                          style: TextStyle(
+                            decoration: TextDecoration.lineThrough,
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
                           ),
                         ),
-                        if (price > 0) ...<Widget>[
-                          Spacer(),
-                          Text(
-                            '₹${price.toStringAsFixed(0)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                        Row(
+                          children: [
+                            Text(
+                              '₹${discountedPrice.toInt()}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: AppColors.success,
+                              ),
                             ),
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.success,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${discountPercentage.toInt()}% OFF',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Save ₹${savings.toInt()}',
+                          style: TextStyle(
+                            color: AppColors.success,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
+                        ),
+                      ] else [
+                        Text(
+                          '₹${originalPrice.toInt()}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: AppColors.textSecondary,
-              ),
-            ],
-          ),
+                if (onSelectionChanged == null)
+                  ElevatedButton(
+                    onPressed: onPurchase,
+                    child: Text('Purchase'),
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
-  }
-
-  Color _getTypeColor() {
-    switch (type.toLowerCase()) {
-      case 'test series':
-        return AppColors.primary;
-      case 'study material':
-        return AppColors.success;
-      default:
-        return AppColors.secondary;
-    }
   }
 }

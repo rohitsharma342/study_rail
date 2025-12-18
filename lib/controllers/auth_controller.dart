@@ -1,17 +1,16 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/user.dart';
-import '../services/static_data.dart';
-import '../utils/app_routes.dart';
+import '../models/user_model.dart';
+import '../services/data_service.dart';
 
 class AuthController extends GetxController {
-  final Rx<User?> _currentUser = Rx<User?>(null);
-  final RxBool _isLoading = false.obs;
-  final RxBool _isLoggedIn = false.obs;
+  final DataService _dataService = DataService();
+  
+  final Rx<UserModel?> _user = Rx<UserModel?>(null);
+  final RxBool isLoggedIn = false.obs;
+  final RxBool isLoading = false.obs;
 
-  User? get currentUser => _currentUser.value;
-  bool get isLoading => _isLoading.value;
-  bool get isLoggedIn => _isLoggedIn.value;
+  UserModel? get user => _user.value;
 
   @override
   void onInit() {
@@ -20,67 +19,95 @@ class AuthController extends GetxController {
   }
 
   Future<void> checkLoginStatus() async {
-    _isLoading.value = true;
+    isLoading.value = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+      final userId = prefs.getString('user_id');
       
-      if (isLoggedIn) {
-        _currentUser.value = StaticData.currentUser;
-        _isLoggedIn.value = true;
+      if (userId != null) {
+        final userData = _dataService.getUserData();
+        _user.value = UserModel.fromJson(userData);
+        isLoggedIn.value = true;
       }
     } catch (e) {
       print('Error checking login status: $e');
     } finally {
-      _isLoading.value = false;
+      isLoading.value = false;
     }
   }
 
   Future<bool> login(String email, String password) async {
-    _isLoading.value = true;
-    
+    isLoading.value = true;
     try {
-      await Future.delayed(Duration(seconds: 2)); // Simulate API call
+      // Simulate API call
+      await Future.delayed(Duration(seconds: 1));
       
-      // Simple validation for demo
-      if (email.contains('@railway.gov.in') && password.length >= 6) {
-        _currentUser.value = StaticData.currentUser;
-        _isLoggedIn.value = true;
+      if (email == 'user@studyrail.com' && password == 'password') {
+        final userData = _dataService.getUserData();
+        _user.value = UserModel.fromJson(userData);
         
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('user_id', userData['id']);
         
-        Get.offAllNamed(AppRoutes.dashboard);
-        Get.snackbar('Success', 'Login successful!');
+        isLoggedIn.value = true;
         return true;
-      } else {
-        Get.snackbar('Error', 'Invalid credentials');
-        return false;
       }
+      return false;
     } catch (e) {
-      Get.snackbar('Error', 'Login failed. Please try again.');
+      print('Login error: $e');
       return false;
     } finally {
-      _isLoading.value = false;
+      isLoading.value = false;
     }
   }
 
   Future<void> logout() async {
-    _isLoading.value = true;
-    
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('isLoggedIn');
+      await prefs.clear();
       
-      _currentUser.value = null;
-      _isLoggedIn.value = false;
-      
-      Get.offAllNamed(AppRoutes.login);
-      Get.snackbar('Success', 'Logged out successfully');
+      _user.value = null;
+      isLoggedIn.value = false;
     } catch (e) {
-      Get.snackbar('Error', 'Logout failed');
-    } finally {
-      _isLoading.value = false;
+      print('Logout error: $e');
+    }
+  }
+
+  void purchaseTest(String testId) {
+    if (_user.value != null) {
+      final updatedPurchases = List<String>.from(_user.value!.purchasedTests);
+      if (!updatedPurchases.contains(testId)) {
+        updatedPurchases.add(testId);
+        _user.value = UserModel(
+          id: _user.value!.id,
+          name: _user.value!.name,
+          email: _user.value!.email,
+          phone: _user.value!.phone,
+          department: _user.value!.department,
+          purchasedTests: updatedPurchases,
+          purchasedSubjects: _user.value!.purchasedSubjects,
+          testScores: _user.value!.testScores,
+        );
+      }
+    }
+  }
+
+  void purchaseSubject(String subject) {
+    if (_user.value != null) {
+      final updatedSubjects = List<String>.from(_user.value!.purchasedSubjects);
+      if (!updatedSubjects.contains(subject)) {
+        updatedSubjects.add(subject);
+        _user.value = UserModel(
+          id: _user.value!.id,
+          name: _user.value!.name,
+          email: _user.value!.email,
+          phone: _user.value!.phone,
+          department: _user.value!.department,
+          purchasedTests: _user.value!.purchasedTests,
+          purchasedSubjects: updatedSubjects,
+          testScores: _user.value!.testScores,
+        );
+      }
     }
   }
 }

@@ -1,175 +1,142 @@
 import 'package:get/get.dart';
-import '../models/question.dart';
-import '../services/static_data.dart';
-import '../utils/constants.dart';
+import 'package:flutter/material.dart';
+import '../models/question_model.dart';
+import '../services/data_service.dart';
+import 'auth_controller.dart';
 
 class QuestionController extends GetxController {
-  final RxList<Question> _questions = <Question>[].obs;
-  final RxList<Question> _filteredQuestions = <Question>[].obs;
-  final RxList<String> _selectedSubjects = <String>[].obs;
-  final RxBool _isLoading = false.obs;
-  final RxInt _currentQuestionIndex = 0.obs;
-  final RxString _searchQuery = ''.obs;
-  final RxString _currentSubjectFilter = ''.obs;
-
-  List<Question> get questions => _questions;
-  List<Question> get filteredQuestions => _filteredQuestions;
-  List<String> get selectedSubjects => _selectedSubjects;
-  bool get isLoading => _isLoading.value;
-  int get currentQuestionIndex => _currentQuestionIndex.value;
-  String get searchQuery => _searchQuery.value;
-  String get currentSubjectFilter => _currentSubjectFilter.value;
-
-  Question? get currentQuestion {
-    if (_filteredQuestions.isNotEmpty && 
-        _currentQuestionIndex.value < _filteredQuestions.length) {
-      return _filteredQuestions[_currentQuestionIndex.value];
-    }
-    return null;
-  }
+  final DataService _dataService = DataService();
+  final AuthController authController = Get.find<AuthController>();
+  
+  final RxList<QuestionModel> questions = <QuestionModel>[].obs;
+  final RxList<String> subjects = <String>[].obs;
+  final RxList<String> selectedSubjects = <String>[].obs;
+  final RxInt currentQuestionIndex = 0.obs;
+  final RxString searchQuery = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    loadSubjects();
     loadQuestions();
   }
 
-  Future<void> loadQuestions() async {
-    _isLoading.value = true;
+  void loadSubjects() {
+    subjects.value = _dataService.getSubjects();
+  }
+
+  void loadQuestions() {
+    final questionData = _dataService.getQuestionBankData();
+    questions.value = questionData.map((data) => QuestionModel.fromJson(data)).toList();
+  }
+
+  List<QuestionModel> get filteredQuestions {
+    var filtered = questions.where((question) {
+      // Filter by selected subjects
+      if (selectedSubjects.isNotEmpty && 
+          !selectedSubjects.contains(question.subject)) {
+        return false;
+      }
+      
+      // Filter by search query
+      if (searchQuery.value.isNotEmpty) {
+        return question.question.toLowerCase()
+            .contains(searchQuery.value.toLowerCase());
+      }
+      
+      return true;
+    }).toList();
     
-    try {
-      await Future.delayed(Duration(seconds: 1)); // Simulate API call
-      _questions.value = StaticData.questions;
-      _filteredQuestions.value = _questions;
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to load questions');
-    } finally {
-      _isLoading.value = false;
-    }
-  }
-
-  void filterQuestions() {
-    List<Question> filtered = _questions;
-
-    // Filter by current subject (for subject-specific view)
-    if (_currentSubjectFilter.value.isNotEmpty) {
-      filtered = filtered
-          .where((q) => q.subject == _currentSubjectFilter.value)
-          .toList();
-    }
-    // Filter by selected subjects (for general view)
-    else if (_selectedSubjects.isNotEmpty) {
-      filtered = filtered
-          .where((q) => _selectedSubjects.contains(q.subject))
-          .toList();
-    }
-
-    // Filter by search query
-    if (_searchQuery.value.isNotEmpty) {
-      filtered = filtered
-          .where((q) => 
-              q.question.toLowerCase().contains(_searchQuery.value.toLowerCase()) ||
-              q.subject.toLowerCase().contains(_searchQuery.value.toLowerCase()))
-          .toList();
-    }
-
-    _filteredQuestions.value = filtered;
-    _currentQuestionIndex.value = 0;
-  }
-
-  void filterQuestionsBySubject(String subject) {
-    _currentSubjectFilter.value = subject;
-    _selectedSubjects.clear();
-    _searchQuery.value = '';
-    filterQuestions();
+    return filtered;
   }
 
   void toggleSubjectFilter(String subject) {
-    _currentSubjectFilter.value = '';
-    if (_selectedSubjects.contains(subject)) {
-      _selectedSubjects.remove(subject);
+    if (selectedSubjects.contains(subject)) {
+      selectedSubjects.remove(subject);
     } else {
-      _selectedSubjects.add(subject);
+      // Check if user has access to this subject
+      if (!authController.user!.hasAccessToSubject(subject)) {
+        Get.snackbar(
+          'Access Denied',
+          'Please purchase access to $subject to practice questions.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+      selectedSubjects.add(subject);
     }
-    filterQuestions();
+    currentQuestionIndex.value = 0; // Reset to first question
   }
 
   void updateSearchQuery(String query) {
-    _searchQuery.value = query;
-    filterQuestions();
-  }
-
-  void clearFilters() {
-    _selectedSubjects.clear();
-    _searchQuery.value = '';
-    _currentSubjectFilter.value = '';
-    _filteredQuestions.value = _questions;
-    _currentQuestionIndex.value = 0;
+    searchQuery.value = query;
+    currentQuestionIndex.value = 0; // Reset to first question
   }
 
   void nextQuestion() {
-    if (_currentQuestionIndex.value < _filteredQuestions.length - 1) {
-      _currentQuestionIndex.value++;
+    final filtered = filteredQuestions;
+    if (filtered.isNotEmpty && currentQuestionIndex.value < filtered.length - 1) {
+      currentQuestionIndex.value++;
     }
   }
 
   void previousQuestion() {
-    if (_currentQuestionIndex.value > 0) {
-      _currentQuestionIndex.value--;
+    if (currentQuestionIndex.value > 0) {
+      currentQuestionIndex.value--;
     }
   }
 
-  void jumpToQuestion(int index) {
-    if (index >= 0 && index < _filteredQuestions.length) {
-      _currentQuestionIndex.value = index;
-    }
-  }
-
-  void selectAnswer(String answer) {
-    if (currentQuestion != null) {
-      final index = _questions.indexWhere((q) => q.id == currentQuestion!.id);
-      if (index != -1) {
-        _questions[index].userAnswer = answer;
-        _questions.refresh();
-        _filteredQuestions.refresh();
+  void selectAnswer(int optionIndex) {
+    final filtered = filteredQuestions;
+    if (filtered.isNotEmpty) {
+      final currentQuestion = filtered[currentQuestionIndex.value];
+      currentQuestion.selectedAnswer = optionIndex.toString();
+      
+      // Update the original question in the main list
+      final originalIndex = questions.indexWhere((q) => q.id == currentQuestion.id);
+      if (originalIndex != -1) {
+        questions[originalIndex] = currentQuestion;
       }
     }
   }
 
-  void toggleMarkForReview() {
-    if (currentQuestion != null) {
-      final index = _questions.indexWhere((q) => q.id == currentQuestion!.id);
-      if (index != -1) {
-        _questions[index].isMarkedForReview = !_questions[index].isMarkedForReview;
-        _questions.refresh();
-        _filteredQuestions.refresh();
-      }
+  QuestionModel? get currentQuestion {
+    final filtered = filteredQuestions;
+    if (filtered.isNotEmpty && currentQuestionIndex.value < filtered.length) {
+      return filtered[currentQuestionIndex.value];
     }
+    return null;
   }
 
-  int get answeredCount {
-    return _filteredQuestions.where((q) => q.isAnswered).length;
+  bool hasAccessToSubject(String subject) {
+    return authController.user?.hasAccessToSubject(subject) ?? false;
   }
 
-  int get correctAnswersCount {
-    return _filteredQuestions.where((q) => q.isCorrect).length;
-  }
-
-  int get markedForReviewCount {
-    return _filteredQuestions.where((q) => q.isMarkedForReview).length;
-  }
-
-  double get progressPercentage {
-    if (_filteredQuestions.isEmpty) return 0.0;
-    return (answeredCount / _filteredQuestions.length) * 100;
-  }
-
-  double get accuracyPercentage {
-    if (answeredCount == 0) return 0.0;
-    return (correctAnswersCount / answeredCount) * 100;
-  }
-
-  List<String> get availableSubjects {
-    return AppConstants.subjects;
+  void purchaseSubjectAccess(String subject) {
+    // Show purchase dialog or navigate to purchase screen
+    Get.dialog(
+      AlertDialog(
+        title: Text('Purchase Access'),
+        content: Text('Do you want to purchase access to $subject questions?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              authController.purchaseSubject(subject);
+              Get.back();
+              Get.snackbar(
+                'Success',
+                'Access to $subject purchased successfully!',
+                snackPosition: SnackPosition.BOTTOM,
+              );
+            },
+            child: Text('Purchase'),
+          ),
+        ],
+      ),
+    );
   }
 }

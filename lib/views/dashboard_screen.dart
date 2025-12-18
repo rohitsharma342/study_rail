@@ -1,168 +1,342 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../utils/constants.dart';
+import '../utils/routes.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/test_controller.dart';
-import '../controllers/purchase_controller.dart';
-import '../utils/app_colors.dart';
-import '../utils/app_routes.dart';
-import '../services/static_data.dart';
 import '../widgets/custom_app_bar.dart';
 
 class DashboardScreen extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
   final TestController testController = Get.find<TestController>();
-  final PurchaseController purchaseController = Get.find<PurchaseController>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: CustomAppBar(
-        title: 'Dashboard',
-        showNotifications: true,
-        notificationCount: 4,
+        title: AppStrings.dashboard,
+        showNotification: true,
+        notificationCount: 3,
       ),
       drawer: _buildDrawer(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWelcomeSection(),
-            SizedBox(height: 20),
+            _buildWelcomeCard(),
+            SizedBox(height: AppSizes.paddingLarge),
             _buildSearchBar(),
-            SizedBox(height: 20),
-            _buildQuickActions(),
-            SizedBox(height: 20),
+            SizedBox(height: AppSizes.paddingLarge),
             _buildLiveTestsBanner(),
-            SizedBox(height: 20),
+            SizedBox(height: AppSizes.paddingLarge),
+            _buildQuickLinks(),
+            SizedBox(height: AppSizes.paddingLarge),
             _buildMyPurchasesSummary(),
-            SizedBox(height: 20),
-            _buildTrendingSection(),
+            SizedBox(height: AppSizes.paddingLarge),
+            _buildFeaturedContent(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildWelcomeSection() {
-    return Container(
-      padding: EdgeInsets.all(20),
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.secondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Obx(() => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.white,
+                  child: Icon(
+                    Icons.person,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  authController.user?.name ?? 'Guest User',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  authController.user?.department ?? '',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            )),
+          ),
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                _buildDrawerItem(
+                  icon: Icons.dashboard,
+                  title: AppStrings.dashboard,
+                  onTap: () {
+                    Get.back();
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.quiz,
+                  title: AppStrings.liveTests,
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.liveTests);
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.library_books,
+                  title: AppStrings.questionBank,
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.questionBank);
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.school,
+                  title: AppStrings.studyMaterial,
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.studyMaterial);
+                  },
+                ),
+                _buildDrawerItem(
+                  icon: Icons.shopping_bag,
+                  title: AppStrings.myPurchases,
+                  onTap: () {
+                    Get.back();
+                    Get.toNamed(AppRoutes.myPurchases);
+                  },
+                ),
+                Divider(),
+                _buildDrawerItem(
+                  icon: Icons.logout,
+                  title: 'Logout',
+                  onTap: () {
+                    authController.logout();
+                    Get.back();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.primary),
+      title: Text(title),
+      onTap: onTap,
+    );
+  }
+
+  Widget _buildWelcomeCard() {
+    return Obx(() => Container(
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back,',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 14,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  authController.currentUser?.name ?? 'User',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  authController.currentUser?.designation ?? 'Railway Employee',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+          Text(
+            'Welcome back,',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
             ),
           ),
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Icon(
-              Icons.person,
+          Text(
+            authController.user?.name ?? 'Guest User',
+            style: TextStyle(
               color: Colors.white,
-              size: 30,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Ready to boost your exam preparation?',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 14,
             ),
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildSearchBar() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
+            blurRadius: 4,
             offset: Offset(0, 2),
           ),
         ],
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: 'Search questions, study materials...',
+          hintText: AppStrings.search,
           prefixIcon: Icon(Icons.search, color: AppColors.textSecondary),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.grey[50],
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.all(AppSizes.paddingMedium),
         ),
-        onChanged: (query) {
-          // Implement search functionality
+        onChanged: (value) {
+          // Handle search
         },
       ),
     );
   }
 
-  Widget _buildQuickActions() {
-    final actions = [
+  Widget _buildLiveTestsBanner() {
+    return Obx(() {
+      final upcomingTests = testController.tests
+          .where((test) => test.scheduleDate != null && 
+                 test.scheduleDate!.isAfter(DateTime.now()))
+          .take(1)
+          .toList();
+      
+      if (upcomingTests.isEmpty) {
+        return SizedBox.shrink();
+      }
+      
+      final test = upcomingTests.first;
+      
+      return GestureDetector(
+        onTap: () => Get.toNamed(AppRoutes.liveTests),
+        child: Container(
+          padding: EdgeInsets.all(AppSizes.paddingLarge),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+                ),
+                child: Icon(
+                  Icons.access_time,
+                  color: AppColors.primary,
+                  size: 30,
+                ),
+              ),
+              SizedBox(width: AppSizes.paddingMedium),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Upcoming Live Test',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      test.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Scheduled: ${_formatDate(test.scheduleDate!)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.primary,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildQuickLinks() {
+    final quickLinks = [
       {
         'title': 'Live Tests',
+        'subtitle': 'Start practicing',
         'icon': Icons.quiz,
         'color': AppColors.primary,
         'route': AppRoutes.liveTests,
       },
       {
         'title': 'Question Bank',
-        'icon': Icons.question_answer,
+        'subtitle': 'Practice questions',
+        'icon': Icons.library_books,
         'color': AppColors.success,
         'route': AppRoutes.questionBank,
       },
       {
         'title': 'Study Material',
-        'icon': Icons.book,
+        'subtitle': 'Videos & docs',
+        'icon': Icons.school,
         'color': AppColors.warning,
         'route': AppRoutes.studyMaterial,
-      },
-      {
-        'title': 'My Purchases',
-        'icon': Icons.shopping_bag,
-        'color': AppColors.secondary,
-        'route': AppRoutes.myPurchases,
       },
     ];
 
@@ -177,167 +351,91 @@ class DashboardScreen extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: actions.length,
-          itemBuilder: (context, index) {
-            final action = actions[index];
-            return GestureDetector(
-              onTap: () => Get.toNamed(action['route'] as String),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
+        SizedBox(height: AppSizes.paddingMedium),
+        Row(
+          children: quickLinks.map((link) => 
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  right: quickLinks.indexOf(link) < quickLinks.length - 1 
+                      ? AppSizes.paddingSmall : 0,
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: (action['color'] as Color).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      child: Icon(
-                        action['icon'] as IconData,
-                        color: action['color'] as Color,
-                        size: 24,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      action['title'] as String,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
+                child: _buildQuickLinkCard(link),
               ),
-            );
-          },
+            ),
+          ).toList(),
         ),
       ],
     );
   }
 
-  Widget _buildLiveTestsBanner() {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Upcoming Tests',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              TextButton(
-                onPressed: () => Get.toNamed(AppRoutes.liveTests),
-                child: Text('View All'),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Container(
-            padding: EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(8),
+  Widget _buildQuickLinkCard(Map<String, dynamic> link) {
+    return GestureDetector(
+      onTap: () => Get.toNamed(link['route']),
+      child: Container(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+          border: Border.all(color: link['color'].withOpacity(0.2)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, 2),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.schedule, color: AppColors.primary),
-                SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Station Master Promotion Test',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Starts in 3 days',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.success,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    'Purchased',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: link['color'].withOpacity(0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              ),
+              child: Icon(
+                link['icon'],
+                color: link['color'],
+                size: 24,
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: AppSizes.paddingSmall),
+            Text(
+              link['title'],
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              link['subtitle'],
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMyPurchasesSummary() {
-    return Container(
-      padding: EdgeInsets.all(20),
+    return Obx(() => Container(
+      padding: EdgeInsets.all(AppSizes.paddingLarge),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, 2),
+            blurRadius: 8,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -350,94 +448,133 @@ class DashboardScreen extends StatelessWidget {
               Text(
                 'My Purchases',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
-              TextButton(
-                onPressed: () => Get.toNamed(AppRoutes.myPurchases),
-                child: Text('View All'),
+              GestureDetector(
+                onTap: () => Get.toNamed(AppRoutes.myPurchases),
+                child: Text(
+                  'View All',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ],
           ),
-          SizedBox(height: 12),
+          SizedBox(height: AppSizes.paddingMedium),
           Row(
             children: [
-              Expanded(
-                child: _buildStatCard('Test Series', '2', AppColors.primary),
+              _buildPurchaseStatCard(
+                'Tests Purchased',
+                authController.user?.purchasedTests.length.toString() ?? '0',
+                Icons.quiz,
               ),
-              SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard('Study Materials', '5', AppColors.success),
+              SizedBox(width: AppSizes.paddingMedium),
+              _buildPurchaseStatCard(
+                'Subjects Access',
+                authController.user?.purchasedSubjects.length.toString() ?? '0',
+                Icons.book,
               ),
             ],
           ),
         ],
       ),
+    ));
+  }
+
+  Widget _buildPurchaseStatCard(String title, String value, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(AppSizes.paddingMedium),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: AppColors.primary,
+              size: 20,
+            ),
+            SizedBox(width: AppSizes.paddingSmall),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, Color color) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTrendingSection() {
+  Widget _buildFeaturedContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Trending Study Materials',
+          'Featured Content',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
         ),
-        SizedBox(height: 12),
+        SizedBox(height: AppSizes.paddingMedium),
         Container(
-          height: 180,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: StaticData.studyMaterials.length,
+            itemCount: 3,
             itemBuilder: (context, index) {
-              final material = StaticData.studyMaterials[index];
+              final items = [
+                {
+                  'title': 'Railway Exam Guide 2024',
+                  'subtitle': 'Complete preparation guide',
+                  'image': AppImages.railwayStudy,
+                },
+                {
+                  'title': 'Mock Test Series',
+                  'subtitle': '50+ practice tests',
+                  'image': AppImages.examPrep,
+                },
+                {
+                  'title': 'Study Materials',
+                  'subtitle': 'Video lectures & notes',
+                  'image': AppImages.books,
+                },
+              ];
+              
               return Container(
                 width: 140,
-                margin: EdgeInsets.only(right: 12),
+                margin: EdgeInsets.only(right: AppSizes.paddingMedium),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.grey.withOpacity(0.1),
-                      blurRadius: 10,
+                      blurRadius: 4,
                       offset: Offset(0, 2),
                     ),
                   ],
@@ -446,63 +583,50 @@ class DashboardScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(AppSizes.radiusMedium),
+                      ),
                       child: CachedNetworkImage(
-                        imageUrl: material.thumbnailUrl,
+                        imageUrl: items[index]['image']!,
                         height: 80,
                         width: double.infinity,
                         fit: BoxFit.cover,
                         placeholder: (context, url) => Container(
-                          color: AppColors.background,
-                          child: Center(child: CircularProgressIndicator()),
+                          color: Colors.grey[200],
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
                         ),
                         errorWidget: (context, url, error) => Container(
-                          color: AppColors.background,
-                          child: Icon(Icons.image_not_supported),
+                          color: Colors.grey[200],
+                          child: Icon(Icons.error),
                         ),
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.all(8),
+                      padding: EdgeInsets.all(AppSizes.paddingSmall),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            material.title,
+                            items[index]['title']!,
                             style: TextStyle(
-                              fontWeight: FontWeight.w600,
                               fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                           SizedBox(height: 4),
                           Text(
-                            material.subject,
+                            items[index]['subtitle']!,
                             style: TextStyle(
-                              color: AppColors.textSecondary,
                               fontSize: 10,
+                              color: AppColors.textSecondary,
                             ),
-                          ),
-                          SizedBox(height: 4),
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: material.isPurchased
-                                  ? AppColors.success.withOpacity(0.1)
-                                  : AppColors.warning.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              material.isPurchased ? 'Purchased' : 'Premium',
-                              style: TextStyle(
-                                color: material.isPurchased
-                                    ? AppColors.success
-                                    : AppColors.warning,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -517,96 +641,16 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDrawer() {
-    return Drawer(
-      child: Column(
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: AppColors.primary),
-            accountName: Text(authController.currentUser?.name ?? 'User'),
-            accountEmail: Text(authController.currentUser?.email ?? ''),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(
-                Icons.person,
-                color: AppColors.primary,
-                size: 40,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: Icon(Icons.dashboard),
-            title: Text('Dashboard'),
-            onTap: () => Get.back(),
-          ),
-          ListTile(
-            leading: Icon(Icons.quiz),
-            title: Text('Live Tests'),
-            onTap: () {
-              Get.back();
-              Get.toNamed(AppRoutes.liveTests);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.question_answer),
-            title: Text('Question Bank'),
-            onTap: () {
-              Get.back();
-              Get.toNamed(AppRoutes.questionBank);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.book),
-            title: Text('Study Material'),
-            onTap: () {
-              Get.back();
-              Get.toNamed(AppRoutes.studyMaterial);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.shopping_bag),
-            title: Text('My Purchases'),
-            onTap: () {
-              Get.back();
-              Get.toNamed(AppRoutes.myPurchases);
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.leaderboard),
-            title: Text('Leaderboard & Results'),
-            onTap: () {
-              Get.back();
-              Get.toNamed(AppRoutes.leaderboard);
-            },
-          ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
-            onTap: () {
-              Get.back();
-              Get.snackbar('Info', 'Settings coming soon!');
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.help),
-            title: Text('Help & Support'),
-            onTap: () {
-              Get.back();
-              Get.snackbar('Info', 'Help & Support coming soon!');
-            },
-          ),
-          Spacer(),
-          ListTile(
-            leading: Icon(Icons.logout, color: AppColors.error),
-            title: Text('Logout', style: TextStyle(color: AppColors.error)),
-            onTap: () {
-              Get.back();
-              authController.logout();
-            },
-          ),
-        ],
-      ),
-    );
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = date.difference(now).inDays;
+    
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Tomorrow';
+    } else {
+      return 'In $difference days';
+    }
   }
 }
