@@ -6,6 +6,8 @@ import '../views/question_bank_screen.dart';
 import '../views/study_material_screen.dart';
 import '../views/my_purchases_screen.dart';
 import '../views/login_screen.dart';
+import '../views/subject_list_screen.dart';
+import '../views/question_interface_screen.dart';
 
 class AppRoutes {
   static const String splash = '/splash';
@@ -13,6 +15,8 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String liveTests = '/live-tests';
   static const String questionBank = '/question-bank';
+  static const String subjectList = '/subject-list';
+  static const String questionInterface = '/question-interface';
   static const String studyMaterial = '/study-material';
   static const String myPurchases = '/my-purchases';
 
@@ -22,6 +26,8 @@ class AppRoutes {
     GetPage(name: dashboard, page: () => DashboardScreen()),
     GetPage(name: liveTests, page: () => LiveTestsScreen()),
     GetPage(name: questionBank, page: () => QuestionBankScreen()),
+    GetPage(name: subjectList, page: () => SubjectListScreen()),
+    GetPage(name: questionInterface, page: () => QuestionInterfaceScreen()),
     GetPage(name: studyMaterial, page: () => StudyMaterialScreen()),
     GetPage(name: myPurchases, page: () => MyPurchasesScreen()),
   ];

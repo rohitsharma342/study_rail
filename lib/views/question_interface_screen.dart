@@ -2,34 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:percent_indicator/linear_percent_indicator.dart';
 import '../controllers/question_controller.dart';
-import '../controllers/exam_controller.dart';
 import '../controllers/subject_controller.dart';
 import '../utils/app_colors.dart';
-import '../utils/constants.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/question_card.dart';
-import 'subject_list_screen.dart';
+import '../widgets/answer_feedback_widget.dart';
 
-class QuestionBankScreen extends StatelessWidget {
-  final QuestionController questionController = Get.put(QuestionController());
-  final ExamController examController = Get.put(ExamController());
-  final SubjectController subjectController = Get.put(SubjectController());
+class QuestionInterfaceScreen extends StatelessWidget {
+  final QuestionController questionController = Get.find<QuestionController>();
+  final SubjectController subjectController = Get.find<SubjectController>();
 
   @override
   Widget build(BuildContext context) {
-    // Navigate to the new subject list screen
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.off(() => SubjectListScreen());
-    });
-
     return Scaffold(
-      appBar: CustomAppBar(title: 'Question Bank'),
+      backgroundColor: AppColors.background,
+      appBar: CustomAppBar(
+        title: subjectController.selectedSubject?.name ?? 'Questions',
+        showBackButton: true,
+      ),
       body: Obx(
         () => questionController.isLoading
             ? Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  _buildFilterSection(),
                   _buildProgressSection(),
                   Expanded(child: _buildQuestionSection()),
                   _buildNavigationSection(),
@@ -39,7 +34,7 @@ class QuestionBankScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterSection() {
+  Widget _buildProgressSection() {
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -52,78 +47,28 @@ class QuestionBankScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search questions...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: AppColors.divider),
-              ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
-            onChanged: (value) {
-              questionController.updateSearchQuery(value);
-            },
-          ),
-          SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('All Subjects', questionController.selectedSubjects.isEmpty, () {
-                  questionController.clearFilters();
-                }),
-                ...AppConstants.subjects.map((subject) {
-                  return _buildFilterChip(
-                    subject,
-                    questionController.selectedSubjects.contains(subject),
-                    () {
-                      questionController.toggleSubjectFilter(subject);
-                    },
-                  );
-                }).toList(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String label, bool isSelected, VoidCallback onTap) {
-    return Padding(
-      padding: EdgeInsets.only(right: 8),
-      child: FilterChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontSize: 12,
-          ),
-        ),
-        selected: isSelected,
-        onSelected: (_) => onTap(),
-        backgroundColor: Colors.grey[200],
-        selectedColor: AppColors.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressSection() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-      ),
       child: Obx(
         () => Column(
           children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.quiz,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Text(
+                  subjectController.selectedSubject?.name ?? 'Questions',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 12),
             LinearPercentIndicator(
               width: Get.width - 32,
               lineHeight: 8,
@@ -147,14 +92,14 @@ class QuestionBankScreen extends StatelessWidget {
                   AppColors.success,
                 ),
                 _buildStatItem(
-                  'Marked',
-                  questionController.markedForReviewCount.toString(),
-                  AppColors.warning,
+                  'Correct',
+                  questionController.correctAnswersCount.toString(),
+                  AppColors.primary,
                 ),
                 _buildStatItem(
                   'Progress',
                   '${questionController.progressPercentage.toStringAsFixed(0)}%',
-                  AppColors.primary,
+                  AppColors.warning,
                 ),
               ],
             ),
@@ -211,7 +156,7 @@ class QuestionBankScreen extends StatelessWidget {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Try adjusting your filters',
+                  'Try selecting a different subject',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -224,16 +169,26 @@ class QuestionBankScreen extends StatelessWidget {
         
         return SingleChildScrollView(
           padding: EdgeInsets.all(16),
-          child: QuestionCard(
-            question: question,
-            questionNumber: questionController.currentQuestionIndex + 1,
-            totalQuestions: questionController.filteredQuestions.length,
-            onAnswerSelected: (answer) {
-              questionController.selectAnswer(answer);
-            },
-            onMarkForReview: () {
-              questionController.toggleMarkForReview();
-            },
+          child: Column(
+            children: [
+              QuestionCard(
+                question: question,
+                questionNumber: questionController.currentQuestionIndex + 1,
+                totalQuestions: questionController.filteredQuestions.length,
+                onAnswerSelected: (answer) {
+                  questionController.selectAnswer(answer);
+                  // Refresh subject progress when answer is selected
+                  subjectController.refreshProgress();
+                },
+                onMarkForReview: () {
+                  questionController.toggleMarkForReview();
+                },
+              ),
+              AnswerFeedbackWidget(
+                question: question,
+                showFeedback: question.isAnswered,
+              ),
+            ],
           ),
         );
       },

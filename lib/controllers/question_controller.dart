@@ -10,6 +10,7 @@ class QuestionController extends GetxController {
   final RxBool _isLoading = false.obs;
   final RxInt _currentQuestionIndex = 0.obs;
   final RxString _searchQuery = ''.obs;
+  final RxString _currentSubjectFilter = ''.obs;
 
   List<Question> get questions => _questions;
   List<Question> get filteredQuestions => _filteredQuestions;
@@ -17,6 +18,7 @@ class QuestionController extends GetxController {
   bool get isLoading => _isLoading.value;
   int get currentQuestionIndex => _currentQuestionIndex.value;
   String get searchQuery => _searchQuery.value;
+  String get currentSubjectFilter => _currentSubjectFilter.value;
 
   Question? get currentQuestion {
     if (_filteredQuestions.isNotEmpty && 
@@ -49,8 +51,14 @@ class QuestionController extends GetxController {
   void filterQuestions() {
     List<Question> filtered = _questions;
 
-    // Filter by selected subjects
-    if (_selectedSubjects.isNotEmpty) {
+    // Filter by current subject (for subject-specific view)
+    if (_currentSubjectFilter.value.isNotEmpty) {
+      filtered = filtered
+          .where((q) => q.subject == _currentSubjectFilter.value)
+          .toList();
+    }
+    // Filter by selected subjects (for general view)
+    else if (_selectedSubjects.isNotEmpty) {
       filtered = filtered
           .where((q) => _selectedSubjects.contains(q.subject))
           .toList();
@@ -69,7 +77,15 @@ class QuestionController extends GetxController {
     _currentQuestionIndex.value = 0;
   }
 
+  void filterQuestionsBySubject(String subject) {
+    _currentSubjectFilter.value = subject;
+    _selectedSubjects.clear();
+    _searchQuery.value = '';
+    filterQuestions();
+  }
+
   void toggleSubjectFilter(String subject) {
+    _currentSubjectFilter.value = '';
     if (_selectedSubjects.contains(subject)) {
       _selectedSubjects.remove(subject);
     } else {
@@ -86,6 +102,7 @@ class QuestionController extends GetxController {
   void clearFilters() {
     _selectedSubjects.clear();
     _searchQuery.value = '';
+    _currentSubjectFilter.value = '';
     _filteredQuestions.value = _questions;
     _currentQuestionIndex.value = 0;
   }
@@ -134,6 +151,10 @@ class QuestionController extends GetxController {
     return _filteredQuestions.where((q) => q.isAnswered).length;
   }
 
+  int get correctAnswersCount {
+    return _filteredQuestions.where((q) => q.isCorrect).length;
+  }
+
   int get markedForReviewCount {
     return _filteredQuestions.where((q) => q.isMarkedForReview).length;
   }
@@ -141,6 +162,11 @@ class QuestionController extends GetxController {
   double get progressPercentage {
     if (_filteredQuestions.isEmpty) return 0.0;
     return (answeredCount / _filteredQuestions.length) * 100;
+  }
+
+  double get accuracyPercentage {
+    if (answeredCount == 0) return 0.0;
+    return (correctAnswersCount / answeredCount) * 100;
   }
 
   List<String> get availableSubjects {

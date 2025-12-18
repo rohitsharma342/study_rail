@@ -2,6 +2,8 @@ import '../models/user.dart';
 import '../models/test.dart';
 import '../models/question.dart';
 import '../models/study_material.dart';
+import '../models/exam.dart';
+import '../models/subject.dart';
 
 class StaticData {
   static User get currentUser => User(
@@ -90,6 +92,26 @@ class StaticData {
       difficulty: 'Easy',
       tags: ['Gauge', 'Technical', 'Standards'],
     ),
+    Question(
+      id: 'q004',
+      question: 'What is the minimum age requirement for AEN (Assistant Executive Engineer) position?',
+      options: ['21 years', '23 years', '25 years', '27 years'],
+      correctAnswer: 0,
+      explanation: 'The minimum age requirement for AEN position is 21 years as per railway recruitment rules.',
+      subject: 'General Knowledge',
+      difficulty: 'Easy',
+      tags: ['Age', 'Recruitment', 'AEN'],
+    ),
+    Question(
+      id: 'q005',
+      question: 'Which department handles commercial activities in Indian Railways?',
+      options: ['Operating Department', 'Commercial Department', 'Engineering Department', 'Electrical Department'],
+      correctAnswer: 1,
+      explanation: 'Commercial Department handles all commercial activities including ticketing, freight, and revenue management.',
+      subject: 'Commercial Rules',
+      difficulty: 'Easy',
+      tags: ['Department', 'Commercial', 'Organization'],
+    ),
   ];
 
   static List<StudyMaterial> get studyMaterials => [
@@ -133,6 +155,136 @@ class StaticData {
       uploadedDate: DateTime.now().subtract(Duration(days: 7)),
     ),
   ];
+
+  static List<Exam> get exams => [
+    Exam(
+      id: 'exam001',
+      name: 'Assistant Executive Engineer',
+      code: 'AEN',
+      description: 'Technical examination for engineering positions in Indian Railways',
+      subjects: ['Technical Knowledge', 'General Knowledge', 'Safety Rules'],
+      totalQuestions: 150,
+      duration: 180,
+      level: 'Graduate',
+    ),
+    Exam(
+      id: 'exam002',
+      name: 'Assistant Finance Administrator',
+      code: 'AFA',
+      description: 'Financial and administrative examination for finance positions',
+      subjects: ['Commercial Rules', 'General Knowledge', 'Operating Procedures'],
+      totalQuestions: 120,
+      duration: 150,
+      level: 'Graduate',
+    ),
+    Exam(
+      id: 'exam003',
+      name: 'Assistant Mechanical Engineer',
+      code: 'AME',
+      description: 'Mechanical engineering examination for locomotive and workshop positions',
+      subjects: ['Technical Knowledge', 'Safety Rules', 'Operating Procedures'],
+      totalQuestions: 140,
+      duration: 170,
+      level: 'Graduate',
+    ),
+  ];
+
+  static List<Subject> getSubjectsForExam(String examId) {
+    switch (examId) {
+      case 'exam001': // AEN
+        return [
+          Subject(
+            id: 'sub001',
+            name: 'Technical Knowledge',
+            examId: examId,
+            description: 'Engineering fundamentals, railway technology, and technical procedures',
+            totalQuestions: 60,
+            iconUrl: '',
+            color: '#2196F3',
+          ),
+          Subject(
+            id: 'sub002',
+            name: 'General Knowledge',
+            examId: examId,
+            description: 'Current affairs, railway history, and general awareness',
+            totalQuestions: 40,
+            iconUrl: '',
+            color: '#FF9800',
+          ),
+          Subject(
+            id: 'sub003',
+            name: 'Safety Rules',
+            examId: examId,
+            description: 'Railway safety protocols, emergency procedures, and regulations',
+            totalQuestions: 50,
+            iconUrl: '',
+            color: '#F44336',
+          ),
+        ];
+      case 'exam002': // AFA
+        return [
+          Subject(
+            id: 'sub004',
+            name: 'Commercial Rules',
+            examId: examId,
+            description: 'Financial procedures, commercial operations, and revenue management',
+            totalQuestions: 50,
+            iconUrl: '',
+            color: '#4CAF50',
+          ),
+          Subject(
+            id: 'sub005',
+            name: 'General Knowledge',
+            examId: examId,
+            description: 'Current affairs, railway history, and general awareness',
+            totalQuestions: 35,
+            iconUrl: '',
+            color: '#FF9800',
+          ),
+          Subject(
+            id: 'sub006',
+            name: 'Operating Procedures',
+            examId: examId,
+            description: 'Station operations, train operations, and administrative procedures',
+            totalQuestions: 35,
+            iconUrl: '',
+            color: '#9C27B0',
+          ),
+        ];
+      case 'exam003': // AME
+        return [
+          Subject(
+            id: 'sub007',
+            name: 'Technical Knowledge',
+            examId: examId,
+            description: 'Mechanical engineering, locomotive technology, and maintenance',
+            totalQuestions: 70,
+            iconUrl: '',
+            color: '#2196F3',
+          ),
+          Subject(
+            id: 'sub008',
+            name: 'Safety Rules',
+            examId: examId,
+            description: 'Workshop safety, locomotive safety, and maintenance protocols',
+            totalQuestions: 40,
+            iconUrl: '',
+            color: '#F44336',
+          ),
+          Subject(
+            id: 'sub009',
+            name: 'Operating Procedures',
+            examId: examId,
+            description: 'Locomotive operations, workshop procedures, and maintenance schedules',
+            totalQuestions: 30,
+            iconUrl: '',
+            color: '#9C27B0',
+          ),
+        ];
+      default:
+        return [];
+    }
+  }
 
   static Map<String, int> get notifications => {
     'New test available': 2,
