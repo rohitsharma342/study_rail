@@ -8,7 +8,7 @@ import '../utils/app_colors.dart';
 import '../utils/constants.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/question_card.dart';
-import 'subject_list_screen.dart';
+import 'exam_screen.dart';
 
 class QuestionBankScreen extends StatelessWidget {
   final QuestionController questionController = Get.put(QuestionController());
@@ -17,9 +17,9 @@ class QuestionBankScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Navigate to the new subject list screen
+    // Navigate to the new exam selection screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.off(() => SubjectListScreen());
+      Get.off(() => ExamScreen());
     });
 
     return Scaffold(
