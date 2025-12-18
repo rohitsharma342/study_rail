@@ -157,7 +157,7 @@ class LiveTestsScreen extends StatelessWidget {
                     _buildTestInfo(Icons.category, test.category),
                   ],
                 ),
-                if (test.scheduleDate != null) ..[
+                if (test.scheduleDate != null) ...<Widget>[
                   SizedBox(height: 8),
                   Row(
                     children: [
@@ -185,7 +185,7 @@ class LiveTestsScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (test.discountedPrice < test.price) ...[
+                          if (test.discountedPrice < test.price) ...<Widget>[
                             Text(
                               '₹${test.price.toInt()}',
                               style: TextStyle(
@@ -215,7 +215,7 @@ class LiveTestsScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                          ] else ...[
+                          ] else ...<Widget>[
                             Text(
                               '₹${test.price.toInt()}',
                               style: TextStyle(
