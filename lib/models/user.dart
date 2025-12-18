@@ -6,6 +6,8 @@ class User {
   final String designation;
   final List<String> purchasedModules;
   final DateTime lastLogin;
+  final String? phone;
+  final String? profileImage;
 
   User({
     required this.id,
@@ -15,6 +17,8 @@ class User {
     required this.designation,
     required this.purchasedModules,
     required this.lastLogin,
+    this.phone,
+    this.profileImage,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,8 @@ class User {
       designation: json['designation'],
       purchasedModules: List<String>.from(json['purchasedModules']),
       lastLogin: DateTime.parse(json['lastLogin']),
+      phone: json['phone'],
+      profileImage: json['profileImage'],
     );
   }
 
@@ -38,6 +44,8 @@ class User {
       'designation': designation,
       'purchasedModules': purchasedModules,
       'lastLogin': lastLogin.toIso8601String(),
+      'phone': phone,
+      'profileImage': profileImage,
     };
   }
 }

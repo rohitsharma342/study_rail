@@ -2,14 +2,17 @@ class StudyMaterial {
   final String id;
   final String title;
   final String subject;
-  final String type; // video, document, test
+  final String type;
   final String url;
   final String description;
-  final int duration; // in minutes for videos
-  final int size; // in KB for documents
+  final int duration;
+  final int size;
   final bool isPurchased;
   final String thumbnailUrl;
   final DateTime uploadedDate;
+  final double? price;
+  final double? discountedPrice;
+  final String? downloadUrl;
 
   StudyMaterial({
     required this.id,
@@ -23,6 +26,9 @@ class StudyMaterial {
     required this.isPurchased,
     required this.thumbnailUrl,
     required this.uploadedDate,
+    this.price,
+    this.discountedPrice,
+    this.downloadUrl,
   });
 
   String get formattedSize {
@@ -57,6 +63,9 @@ class StudyMaterial {
       isPurchased: json['isPurchased'],
       thumbnailUrl: json['thumbnailUrl'],
       uploadedDate: DateTime.parse(json['uploadedDate']),
+      price: json['price']?.toDouble(),
+      discountedPrice: json['discountedPrice']?.toDouble(),
+      downloadUrl: json['downloadUrl'],
     );
   }
 }
