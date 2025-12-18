@@ -20,8 +20,16 @@ class AnswerFeedbackWidget extends StatelessWidget {
 
     final isCorrect = question.isCorrect;
     final correctAnswer = question.correctAnswer;
-    final correctOption = correctAnswer is int && correctAnswer >= 0 && correctAnswer < question.options.length
-        ? question.options[correctAnswer]
+    
+    int? correctAnswerInt;
+    if (correctAnswer is int) {
+      correctAnswerInt = correctAnswer;
+    } else if (correctAnswer is String) {
+      correctAnswerInt = int.tryParse(correctAnswer);
+    }
+    
+    final correctOption = correctAnswerInt != null && correctAnswerInt >= 0 && correctAnswerInt < question.options.length
+        ? question.options[correctAnswerInt]
         : 'N/A';
     
     return Container(
@@ -68,7 +76,7 @@ class AnswerFeedbackWidget extends StatelessWidget {
                         color: isCorrect ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctAnswer, correctOption),
+                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctAnswerInt, correctOption),
                   ],
                 ),
               ),
@@ -80,9 +88,9 @@ class AnswerFeedbackWidget extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildIncorrectAnswerInfo(dynamic correctAnswer, String correctOption) {
-    final answerLabel = correctAnswer is int && correctAnswer >= 0
-        ? String.fromCharCode(65 + correctAnswer)
+  List<Widget> _buildIncorrectAnswerInfo(int? correctAnswerInt, String correctOption) {
+    final answerLabel = correctAnswerInt != null && correctAnswerInt >= 0
+        ? String.fromCharCode(65 + correctAnswerInt)
         : 'N/A';
     
     return [
