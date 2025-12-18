@@ -23,7 +23,7 @@ class SubjectController extends GetxController {
     loadSubjects();
     
     // Listen to exam changes
-    ever(examController._selectedExam, (_) {
+    ever(examController.selectedExamRx, (_) {
       loadSubjects();
     });
   }

@@ -65,65 +65,73 @@ class AnswerFeedbackWidget extends StatelessWidget {
                         color: isCorrect ? AppColors.success : AppColors.error,
                       ),
                     ),
-                    if (!isCorrect) ..[
-                      SizedBox(height: 4),
-                      Text(
-                        'Correct answer: ${String.fromCharCode(65 + question.correctAnswer)}. $correctOption',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
+                    if (!isCorrect) ..._buildIncorrectAnswerInfo(correctOption),
                   ],
                 ),
               ),
             ],
           ),
-          if (question.explanation.isNotEmpty) ..[
-            SizedBox(height: 12),
-            Container(
-              padding: EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        color: AppColors.warning,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Explanation',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.warning,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    question.explanation,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          if (question.explanation.isNotEmpty) ..._buildExplanation(),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildIncorrectAnswerInfo(String correctOption) {
+    return [
+      SizedBox(height: 4),
+      Text(
+        'Correct answer: ${String.fromCharCode(65 + question.correctAnswer)}. $correctOption',
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.textSecondary,
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildExplanation() {
+    return [
+      SizedBox(height: 12),
+      Container(
+        padding: EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  color: AppColors.warning,
+                  size: 16,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Explanation',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              question.explanation,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 }
