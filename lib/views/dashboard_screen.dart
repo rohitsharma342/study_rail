@@ -548,6 +548,15 @@ class DashboardScreen extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: Icon(Icons.computer),
+            title: Text('CBT Exam Interface'),
+            onTap: () {
+              Get.back();
+              // Navigate to exam selection first, then to exam interface
+              Get.toNamed(AppRoutes.examScreen);
+            },
+          ),
+          ListTile(
             leading: Icon(Icons.question_answer),
             title: Text('Question Bank'),
             onTap: () {
