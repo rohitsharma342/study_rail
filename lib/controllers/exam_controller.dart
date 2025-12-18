@@ -10,6 +10,7 @@ class ExamController extends GetxController {
   List<Exam> get exams => _exams;
   Exam? get selectedExam => _selectedExam.value;
   bool get isLoading => _isLoading.value;
+  Rx<Exam?> get selectedExamObs => _selectedExam;
 
   @override
   void onInit() {
@@ -23,7 +24,9 @@ class ExamController extends GetxController {
     try {
       await Future.delayed(Duration(milliseconds: 500)); // Simulate API call
       _exams.value = StaticData.exams;
-      if (_exams.isNotEmpty) {
+      
+      // Auto-select first exam if none selected
+      if (_selectedExam.value == null && _exams.isNotEmpty) {
         _selectedExam.value = _exams.first;
       }
     } catch (e) {
@@ -37,18 +40,7 @@ class ExamController extends GetxController {
     _selectedExam.value = exam;
   }
 
-  void selectExamById(String examId) {
-    final exam = _exams.firstWhereOrNull((e) => e.id == examId);
-    if (exam != null) {
-      _selectedExam.value = exam;
-    }
-  }
-
-  List<String> get examNames {
-    return _exams.map((exam) => exam.name).toList();
-  }
-
-  List<String> get examCodes {
-    return _exams.map((exam) => exam.code).toList();
+  void clearSelection() {
+    _selectedExam.value = null;
   }
 }

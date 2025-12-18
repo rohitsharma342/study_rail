@@ -5,7 +5,7 @@ class Exam {
   final String description;
   final List<String> subjects;
   final int totalQuestions;
-  final int duration;
+  final int duration; // in minutes
   final String level;
 
   Exam({
