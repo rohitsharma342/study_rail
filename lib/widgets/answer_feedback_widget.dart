@@ -25,7 +25,7 @@ class AnswerFeedbackWidget extends StatelessWidget {
     if (correctAnswer is int) {
       correctAnswerInt = correctAnswer;
     } else if (correctAnswer is String) {
-      correctAnswerInt = int.tryParse(correctAnswer) ?? 0;
+      correctAnswerInt = int.tryParse(correctAnswer.toString()) ?? 0;
     }
     
     final correctOption = question.options[correctAnswerInt];
