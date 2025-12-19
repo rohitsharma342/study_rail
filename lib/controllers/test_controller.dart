@@ -92,7 +92,7 @@ class TestController extends GetxController {
   }
 
   void startTest(TestModel test) {
-    if (!authController.user!.hasAccessToTest(test.id)) {
+    if (authController.user == null || !authController.user!.hasAccessToTest(test.id)) {
       Get.snackbar(
         'Access Denied',
         'Please purchase this test to access it.',

@@ -55,7 +55,7 @@ class QuestionController extends GetxController {
       selectedSubjects.remove(subject);
     } else {
       // Check if user has access to this subject
-      if (!authController.user!.hasAccessToSubject(subject)) {
+      if (authController.user == null || !authController.user!.hasAccessToSubject(subject)) {
         Get.snackbar(
           'Access Denied',
           'Please purchase access to $subject to practice questions.',

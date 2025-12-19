@@ -78,15 +78,8 @@ class AuthController extends GetxController {
       final updatedPurchases = List<String>.from(_user.value!.purchasedTests);
       if (!updatedPurchases.contains(testId)) {
         updatedPurchases.add(testId);
-        _user.value = UserModel(
-          id: _user.value!.id,
-          name: _user.value!.name,
-          email: _user.value!.email,
-          phone: _user.value!.phone,
-          department: _user.value!.department,
+        _user.value = _user.value!.copyWith(
           purchasedTests: updatedPurchases,
-          purchasedSubjects: _user.value!.purchasedSubjects,
-          testScores: _user.value!.testScores,
         );
       }
     }
@@ -97,15 +90,8 @@ class AuthController extends GetxController {
       final updatedSubjects = List<String>.from(_user.value!.purchasedSubjects);
       if (!updatedSubjects.contains(subject)) {
         updatedSubjects.add(subject);
-        _user.value = UserModel(
-          id: _user.value!.id,
-          name: _user.value!.name,
-          email: _user.value!.email,
-          phone: _user.value!.phone,
-          department: _user.value!.department,
-          purchasedTests: _user.value!.purchasedTests,
+        _user.value = _user.value!.copyWith(
           purchasedSubjects: updatedSubjects,
-          testScores: _user.value!.testScores,
         );
       }
     }
