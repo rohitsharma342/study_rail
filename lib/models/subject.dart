@@ -6,8 +6,6 @@ class Subject {
   final int totalQuestions;
   final String? iconUrl;
   final String? color;
-  final int completedQuestions;
-  final double progressPercentage;
 
   Subject({
     required this.id,
@@ -17,8 +15,6 @@ class Subject {
     required this.totalQuestions,
     this.iconUrl,
     this.color,
-    this.completedQuestions = 0,
-    this.progressPercentage = 0.0,
   });
 
   factory Subject.fromJson(Map<String, dynamic> json) {
@@ -30,8 +26,6 @@ class Subject {
       totalQuestions: json['totalQuestions'],
       iconUrl: json['iconUrl'],
       color: json['color'],
-      completedQuestions: json['completedQuestions'] ?? 0,
-      progressPercentage: json['progressPercentage'] ?? 0.0,
     );
   }
 
@@ -44,8 +38,6 @@ class Subject {
       'totalQuestions': totalQuestions,
       'iconUrl': iconUrl,
       'color': color,
-      'completedQuestions': completedQuestions,
-      'progressPercentage': progressPercentage,
     };
   }
 }
