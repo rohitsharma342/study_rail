@@ -1,34 +1,27 @@
 class UserModel {
-  final String id;
-  final String name;
-  final String email;
-  final String phone;
-  final String department;
-  final List<String> purchasedTests;
-  final List<String> purchasedSubjects;
-  final Map<String, dynamic> testScores;
+  final String? id;
+  final String? name;
+  final String? email;
+  final String? department;
+  final List<String> purchasedModules;
 
   UserModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.department,
-    this.purchasedTests = const [],
-    this.purchasedSubjects = const [],
-    this.testScores = const {},
+    this.id,
+    this.name,
+    this.email,
+    this.department,
+    this.purchasedModules = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      phone: json['phone'],
-      department: json['department'],
-      purchasedTests: List<String>.from(json['purchasedTests'] ?? []),
-      purchasedSubjects: List<String>.from(json['purchasedSubjects'] ?? []),
-      testScores: Map<String, dynamic>.from(json['testScores'] ?? {}),
+      id: json['id']?.toString(),
+      name: json['name']?.toString(),
+      email: json['email']?.toString(),
+      department: json['department']?.toString(),
+      purchasedModules: json['purchasedModules'] != null
+          ? List<String>.from(json['purchasedModules'])
+          : [],
     );
   }
 
@@ -37,19 +30,24 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
-      'phone': phone,
       'department': department,
-      'purchasedTests': purchasedTests,
-      'purchasedSubjects': purchasedSubjects,
-      'testScores': testScores,
+      'purchasedModules': purchasedModules,
     };
   }
 
-  bool hasAccessToTest(String testId) {
-    return purchasedTests.contains(testId);
-  }
-
-  bool hasAccessToSubject(String subject) {
-    return purchasedSubjects.contains(subject);
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? department,
+    List<String>? purchasedModules,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      department: department ?? this.department,
+      purchasedModules: purchasedModules ?? this.purchasedModules,
+    );
   }
 }
